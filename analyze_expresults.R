@@ -22,20 +22,6 @@ dat_wing <- read.csv('2020_08_26_selectedwtwings.csv', stringsAsFactors = FALSE,
 dat_wing$WingID = paste("F", dat_wing$frameID, sep = "")
 
 
-dat_raw$PT_V[count]      <- lapply(completedata$PT_V[count], function(x) set_errors(x, info_PT_V$data_std_true))
-dat_raw$LC_FX_V[count]   <- lapply(completedata$LC_FX_V_std[count], function(x) set_errors(x, info_LC_FX_V$data_std_true))
-dat_raw$LC_FY_V[count]   <- lapply(completedata$LC_FY_V_std[count], function(x) set_errors(x, info_LC_FY_V$data_std_true))
-dat_raw$LC_FZ_V[count]   <- lapply(completedata$LC_FZ_V_std[count], function(x) set_errors(x, info_LC_FZ_V$data_std_true))
-dat_raw$LC_MX_V[count]   <- lapply(completedata$LC_MX_V_std[count], function(x) set_errors(x, info_LC_MX_V$data_std_true))
-dat_raw$LC_MY_V[count]   <- lapply(completedata$LC_MY_V_std[count], function(x) set_errors(x, info_LC_MY_V$data_std_true))
-dat_raw$LC_MZ_V[count]   <- lapply(completedata$LC_MZ_V_std[count], function(x) set_errors(x, info_LC_MZ_V$data_std_true))
-dat_raw$T_atm[count]     <- lapply(completedata$T_atm_std[count], function(x) set_errors(x, info_T_atm$data_std_true))
-
-
-
-
-
-
 # pre-define the matrix
 dat_stab_exp  <- data.frame(matrix(nrow = 18, ncol = 3))
 names(dat_stab_exp) <- c("WingID","elbow","manus")

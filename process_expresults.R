@@ -1,162 +1,145 @@
-## -----------------------------------------------------------------------------
-## ------------------------- Main Processing Data Script -----------------------
-## -----------------------------------------------------------------------------
 
-# Created: 22-Oct-20 (Christina Harvey)
 
 ## ---------------- Load libraries ----------------
 library(R.matlab)
+library(pracma)
 library(quantities)
-library(errors)
-## ---------------- Pre-define folder names ----------------------
-folder_names <- c("09_28_F1380_high", "09_28_F1380_low", "09_28_F4352_high", "09_29_F2195_high","09_28_F2195_low",
-                  "09_29_F4546_high", "09_29_F4546_low", "09_29_F4849_high", "09_29_F4849_low", "09_30_F3891_high",
-                  "09_30_F3891_low", "09_30_F4647_high", "09_30_F4647_low", "09_30_F4911_high", "10_01_F4911_low",
-                  "10_01_F4352_low", "10_01_F6003_low", "10_01_F6003_high")
-folder_data <- c("/Users/Inman PC/Google Drive/DoctoralThesis/WindTunnel/2020_Gull_PassiveLongitudinalStudy/Data") #For Windows
 
-## ---------------- Pre-define storage matrix ----------------------
-completedata        <- as.data.frame(matrix(nrow = 810, ncol = 28))
-names(completedata) <- c("FrameID","U_des","angle_no","alpha","T_atm","T_atm_std",
-                         "pt_mean","pt_std","Vfx_mean","Vfy_mean","Vfz_mean","Vmx_mean","Vmy_mean","Vmz_mean",
-                         "pt_std","Vfx_std","Vfy_std","Vfz_std","Vmx_std","Vmy_std","Vmz_std",
-                         "pt_dof","Vfx_dof","Vfy_dof","Vfz_dof","Vmx_dof","Vmy_dof","Vmz_dof")
-count = 1
+## ---------------- Load data ----------------
+dat_raw    <- read.csv("2020_10_23_ConcatenatedRawData.csv", stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
+dat_static <- readMat("WingIDF2195_U0_A0_fulldata.mat")
 
-## ---------------- Loop through each test folder ----------------------
-for (i in 1:18){
+## --------------- Set the known constants --------------
+# error will be set to zero
+ATI_cal <-  rbind(c(-0.91164,   0.22078,  -0.71620, -35.41503,   2.10003,  34.48183),     
+                 c(1.56291,  39.81764,  -1.03218, -20.15276,  -0.44775, -20.02389),
+                 c(59.90570,   0.52238,  59.85577,   0.00933,  60.85201,   0.46774),
+                 c(0.03351,   0.48419,  -2.10348,  -0.25082,   2.08893,  -0.21805), 
+                 c(2.37399,   0.02293,  -1.18146,   0.42919,  -1.22948,  -0.43109), 
+                 c(-0.06047,  -1.31555,  -0.05634,  -1.34543,  -0.03746,  -1.31427))
+ATI_cal <- lapply(ATI_cal, function(x) set_errors(x, x*0))
 
-  ## ---------------- Set Current Directory ----------------
-  curr_folder <- paste(folder_data,"/2020_",folder_names[i],"_full",sep="")
-  setwd(curr_folder) 
+PT_M         <- 497.68/5
+errors(PT_M) <- 0
+no_samples   <- 1800000
+
+# ------------- Static variables with the tunnel off -------------
+# error is being assumed from a previous run of the tunnel off with F2195 installed
+PT_V_off         <- dat_raw$PT_V_off
+info_PT_V_off    <- timeseries_std(dat_static$data.P.V[,1], no_samples)
+errors(PT_V_off) <- info_PT_V_off$data_std_true  # Type B uncertainty - assuming constant for all tests
+
+LC1_off         <- dat_raw$LC_FX_V_off
+LC2_off         <- dat_raw$LC_FY_V_off
+LC3_off         <- dat_raw$LC_FZ_V_off
+LC4_off         <- dat_raw$LC_MX_V_off
+LC5_off         <- dat_raw$LC_MY_V_off
+LC6_off         <- dat_raw$LC_MZ_V_off
+info_LC1_off    <- timeseries_std(dat_static$data.LC.V[,1], no_samples)
+errors(LC1_off) <- info_LC1_off$data_std_true # Type B uncertainty - assuming constant for all tests
+info_LC2_off    <- timeseries_std(dat_static$data.LC.V[,2], no_samples)
+errors(LC2_off) <- info_LC2_off$data_std_true # Type B uncertainty - assuming constant for all tests
+info_LC3_off    <- timeseries_std(dat_static$data.LC.V[,3], no_samples)
+errors(LC3_off) <- info_LC3_off$data_std_true # Type B uncertainty - assuming constant for all tests
+info_LC4_off    <- timeseries_std(dat_static$data.LC.V[,4], no_samples)
+errors(LC4_off) <- info_LC4_off$data_std_true # Type B uncertainty - assuming constant for all tests
+info_LC5_off    <- timeseries_std(dat_static$data.LC.V[,5], no_samples)
+errors(LC5_off) <- info_LC5_off$data_std_true # Type B uncertainty - assuming constant for all tests
+info_LC6_off    <- timeseries_std(dat_static$data.LC.V[,6], no_samples)
+errors(LC6_off) <- info_LC6_off$data_std_true # Type B uncertainty - assuming constant for all tests
+
+# - Correlation between static variables
+correl(PT_V_off,LC1_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,1]) # PT and lc channel 1
+correl(PT_V_off,LC2_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,2]) # PT and lc channel 2
+correl(PT_V_off,LC3_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,3]) # PT and lc channel 3
+correl(PT_V_off,LC4_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,4]) # PT and lc channel 4
+correl(PT_V_off,LC5_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,5]) # PT and lc channel 5
+correl(PT_V_off,LC6_off)  <- cor(dat_static$data.P.V[,1],dat_static$data.LC.V[,6]) # PT and lc channel 6
+
+correl(LC1_off,LC2_off)   <- cor(dat_static$data.LC.V[,1],dat_static$data.LC.V[,2]) # lc channel 1 and lc channel 2
+correl(LC1_off,LC3_off)   <- cor(dat_static$data.LC.V[,1],dat_static$data.LC.V[,3]) # lc channel 1 and lc channel 3
+correl(LC1_off,LC4_off)   <- cor(dat_static$data.LC.V[,1],dat_static$data.LC.V[,4]) # lc channel 1 and lc channel 4
+correl(LC1_off,LC5_off)   <- cor(dat_static$data.LC.V[,1],dat_static$data.LC.V[,5]) # lc channel 1 and lc channel 5
+correl(LC1_off,LC6_off)   <- cor(dat_static$data.LC.V[,1],dat_static$data.LC.V[,6]) # lc channel 1 and lc channel 6
+
+correl(LC2_off,LC3_off)   <- cor(dat_static$data.LC.V[,2],dat_static$data.LC.V[,3]) # lc channel 2 and lc channel 3
+correl(LC2_off,LC4_off)   <- cor(dat_static$data.LC.V[,2],dat_static$data.LC.V[,4]) # lc channel 2 and lc channel 4
+correl(LC2_off,LC5_off)   <- cor(dat_static$data.LC.V[,2],dat_static$data.LC.V[,5]) # lc channel 2 and lc channel 5
+correl(LC2_off,LC6_off)   <- cor(dat_static$data.LC.V[,2],dat_static$data.LC.V[,6]) # lc channel 2 and lc channel 6
+
+correl(LC3_off,LC4_off)   <- cor(dat_static$data.LC.V[,3],dat_static$data.LC.V[,4]) # lc channel 3 and lc channel 4
+correl(LC3_off,LC5_off)   <- cor(dat_static$data.LC.V[,3],dat_static$data.LC.V[,5]) # lc channel 3 and lc channel 5
+correl(LC3_off,LC6_off)   <- cor(dat_static$data.LC.V[,3],dat_static$data.LC.V[,6]) # lc channel 3 and lc channel 6
+
+correl(LC4_off,LC5_off)   <- cor(dat_static$data.LC.V[,4],dat_static$data.LC.V[,5]) # lc channel 4 and lc channel 5
+correl(LC4_off,LC6_off)   <- cor(dat_static$data.LC.V[,4],dat_static$data.LC.V[,6]) # lc channel 4 and lc channel 5
+
+correl(LC5_off,LC6_off)   <- cor(dat_static$data.LC.V[,5],dat_static$data.LC.V[,6]) # lc channel 5 and lc channel 6
+
+# ------------- Dynamic variables with the tunnel on -------------
+# prep all measurands with errors and correlations built in
+PT_V                  <- dat_raw$PT_V
+errors(PT_V)          <- dat_raw$PT_V_std             # Type A uncertainty
+
+P_atm                 <- dat_raw$PT_V
+errors(P_atm)         <- 0.025*3386.39/sqrt(3) # Type B uncertainty - follows GUM 4.3.7 a = half width 
+
+T_atm                 <- dat_raw$T_atm
+errors(T_atm)         <- dat_raw$T_atm_std     # Type A uncertainty
+
+LC1         <- dat_raw$LC_FX_V
+LC2         <- dat_raw$LC_FY_V
+LC3         <- dat_raw$LC_FZ_V
+LC4         <- dat_raw$LC_MX_V
+LC5         <- dat_raw$LC_MY_V
+LC6         <- dat_raw$LC_MZ_V
+errors(LC1) <- dat_raw$LC_FX_V_std
+errors(LC2) <- dat_raw$LC_FY_V_std
+errors(LC3) <- dat_raw$LC_FZ_V_std
+errors(LC4) <- dat_raw$LC_MX_V_std
+errors(LC5) <- dat_raw$LC_MY_V_std
+errors(LC6) <- dat_raw$LC_MZ_V_std
+
+correl(PT_V, LC1) <- dat_raw$cor_PT_LC1
+correl(PT_V, LC2) <- dat_raw$cor_PT_LC2
+correl(PT_V, LC3) <- dat_raw$cor_PT_LC3
+correl(PT_V, LC4) <- dat_raw$cor_PT_LC4
+correl(PT_V, LC5) <- dat_raw$cor_PT_LC5
+correl(PT_V, LC6) <- dat_raw$cor_PT_LC6
+
+correl(LC1, LC2)  <- dat_raw$cor_LC1_LC2
+correl(LC1, LC3)  <- dat_raw$cor_LC1_LC3
+correl(LC1, LC4)  <- dat_raw$cor_LC1_LC4
+correl(LC1, LC5)  <- dat_raw$cor_LC1_LC5
+correl(LC1, LC6)  <- dat_raw$cor_LC1_LC6
+
+correl(LC2, LC3)  <- dat_raw$cor_LC2_LC3
+correl(LC2, LC4)  <- dat_raw$cor_LC2_LC4
+correl(LC2, LC5)  <- dat_raw$cor_LC2_LC5
+correl(LC2, LC6)  <- dat_raw$cor_LC2_LC6
+
+correl(LC3, LC4)  <- dat_raw$cor_LC3_LC4
+correl(LC3, LC5)  <- dat_raw$cor_LC3_LC5
+correl(LC3, LC6)  <- dat_raw$cor_LC3_LC6
+
+correl(LC4, LC5)  <- dat_raw$cor_LC4_LC5
+correl(LC4, LC6)  <- dat_raw$cor_LC4_LC6
+
+correl(LC5, LC6)  <- dat_raw$cor_LC5_LC6
+
+## --------- Iterate through each entry ---------------
+
+for (i in 1:length(LC1)){
+  alpha = dat_raw$alpha
+  # -------------- Calculate the velocity in the test ----------------
+  fluidprop = calc_fluid_prop(P_atm[i],T_atm[i])
+  res_vel   = calc_U(fluidprop, M, PT_V[i], PT_V_off[i])
   
-  # save all file names in the folder
-  filelist <- list.files(pattern = ".mat")
-  
-  for (j in 1:length(filelist)){
-    # read in the .mat files one at a time
-    rundata  <- readMat(filelist[j])
-    
-    completedata$FrameID[count] <- unlist(rundata$WingID)
-    
-    if (rundata$U[1,1] > 14){
-      completedata$U_des[count] <- "high"
-    } else {
-      completedata$U_des[count] <- "low"
-    }
-    # define the current angle of attack
-    completedata$angle_no[count] <- rundata$N.A[1,1]
-    completedata$alpha[count]    <- rundata$curr.angle[1,1]
-    
-    completedata$PT_V_off[count]     <- rundata$P.V.offset[1,1]
-    completedata$LC_FX_V_off[count]  <- rundata$LC.V.offset[1,1]
-    completedata$LC_FY_V_off[count]  <- rundata$LC.V.offset[1,2]
-    completedata$LC_FZ_V_off[count]  <- rundata$LC.V.offset[1,3]
-    completedata$LC_MX_V_off[count]  <- rundata$LC.V.offset[1,4]
-    completedata$LC_MY_V_off[count]  <- rundata$LC.V.offset[1,5]
-    completedata$LC_MZ_V_off[count]  <- rundata$LC.V.offset[1,6]
-    
-    completedata$PT_V[count]     <- mean(rundata$data.P.V[,1])
-    completedata$LC_FX_V[count]  <- mean(rundata$data.LC.V[,1])
-    completedata$LC_FY_V[count]  <- mean(rundata$data.LC.V[,2])
-    completedata$LC_FZ_V[count]  <- mean(rundata$data.LC.V[,3])
-    completedata$LC_MX_V[count]  <- mean(rundata$data.LC.V[,4])
-    completedata$LC_MY_V[count]  <- mean(rundata$data.LC.V[,5])
-    completedata$LC_MZ_V[count]  <- mean(rundata$data.LC.V[,6])
-    completedata$T_atm[count]    <- mean(rundata$data.T[,1])
-    # number of samples
-    no_samples   <- length(rundata$data.LC.V[,1])
-    no_samples_T <- length(rundata$data.T[,1])
-    
-    ## ------------ Save the standard deviation (uncertainty) and the effective degrees of freedom -------------
-    info_PT_V     <- timeseries_std(rundata$data.P.V[,1], no_samples)
-    info_LC_FX_V  <- timeseries_std(rundata$data.LC.V[,1], no_samples)
-    info_LC_FY_V  <- timeseries_std(rundata$data.LC.V[,2], no_samples)
-    info_LC_FZ_V  <- timeseries_std(rundata$data.LC.V[,3], no_samples)
-    info_LC_MX_V  <- timeseries_std(rundata$data.LC.V[,4], no_samples)
-    info_LC_MY_V  <- timeseries_std(rundata$data.LC.V[,5], no_samples)
-    info_LC_MZ_V  <- timeseries_std(rundata$data.LC.V[,6], no_samples)
-    info_T_atm    <- timeseries_std(rundata$data.T[,1], no_samples_T)
-
-    completedata$PT_V_std[count]     <- info_PT_V$data_std_true
-    completedata$LC_FX_V_std[count]  <- info_LC_FX_V$data_std_true
-    completedata$LC_FY_V_std[count]  <- info_LC_FY_V$data_std_true
-    completedata$LC_FZ_V_std[count]  <- info_LC_FZ_V$data_std_true
-    completedata$LC_MX_V_std[count]  <- info_LC_MX_V$data_std_true
-    completedata$LC_MY_V_std[count]  <- info_LC_MY_V$data_std_true
-    completedata$LC_MZ_V_std[count]  <- info_LC_MZ_V$data_std_true
-    completedata$T_atm_std[count]    <- info_T_atm$data_std_true
-    
-    completedata$PT_V_dof[count]     <- info_PT_V$no_dof
-    completedata$LC_FX_V_dof[count]  <- info_LC_FX_V$no_dof
-    completedata$LC_FY_V_dof[count]  <- info_LC_FY_V$no_dof
-    completedata$LC_FZ_V_dof[count]  <- info_LC_FZ_V$no_dof
-    completedata$LC_MX_V_dof[count]  <- info_LC_MX_V$no_dof
-    completedata$LC_MY_V_dof[count]  <- info_LC_MY_V$no_dof
-    completedata$LC_MZ_V_dof[count]  <- info_LC_MZ_V$no_dof
-    completedata$T_atm_dof[count]    <- info_T_atm$no_dof
-    
-    ## --------------- Save the cross correlation data ----------------
-    completedata$cor_PT_LC1[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,1]) # PT and lc channel 1
-    completedata$cor_PT_LC2[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,2]) # PT and lc channel 2
-    completedata$cor_PT_LC3[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,3]) # PT and lc channel 3
-    completedata$cor_PT_LC4[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,4]) # PT and lc channel 4
-    completedata$cor_PT_LC5[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,5]) # PT and lc channel 5
-    completedata$cor_PT_LC6[count]     <- cor(rundata$data.P.V[,1],rundata$data.LC.V[,6]) # PT and lc channel 6
-    
-    completedata$cor_LC1_LC2[count]    <- cor(rundata$data.LC.V[,1],rundata$data.LC.V[,2]) # lc channel 1 and lc channel 2
-    completedata$cor_LC1_LC3[count]    <- cor(rundata$data.LC.V[,1],rundata$data.LC.V[,3]) # lc channel 1 and lc channel 3
-    completedata$cor_LC1_LC4[count]    <- cor(rundata$data.LC.V[,1],rundata$data.LC.V[,4]) # lc channel 1 and lc channel 4
-    completedata$cor_LC1_LC5[count]    <- cor(rundata$data.LC.V[,1],rundata$data.LC.V[,5]) # lc channel 1 and lc channel 5
-    completedata$cor_LC1_LC6[count]    <- cor(rundata$data.LC.V[,1],rundata$data.LC.V[,6]) # lc channel 1 and lc channel 6
-    
-    completedata$cor_LC2_LC3[count]    <- cor(rundata$data.LC.V[,2],rundata$data.LC.V[,3]) # lc channel 2 and lc channel 3
-    completedata$cor_LC2_LC4[count]    <- cor(rundata$data.LC.V[,2],rundata$data.LC.V[,4]) # lc channel 2 and lc channel 4
-    completedata$cor_LC2_LC5[count]    <- cor(rundata$data.LC.V[,2],rundata$data.LC.V[,5]) # lc channel 2 and lc channel 5
-    completedata$cor_LC2_LC6[count]    <- cor(rundata$data.LC.V[,2],rundata$data.LC.V[,6]) # lc channel 2 and lc channel 6
-    
-    completedata$cor_LC3_LC4[count]    <- cor(rundata$data.LC.V[,3],rundata$data.LC.V[,4]) # lc channel 3 and lc channel 4
-    completedata$cor_LC3_LC5[count]    <- cor(rundata$data.LC.V[,3],rundata$data.LC.V[,5]) # lc channel 3 and lc channel 5
-    completedata$cor_LC3_LC6[count]    <- cor(rundata$data.LC.V[,3],rundata$data.LC.V[,6]) # lc channel 3 and lc channel 6
-    
-    completedata$cor_LC4_LC5[count]    <- cor(rundata$data.LC.V[,4],rundata$data.LC.V[,5]) # lc channel 4 and lc channel 5
-    completedata$cor_LC4_LC6[count]    <- cor(rundata$data.LC.V[,4],rundata$data.LC.V[,6]) # lc channel 4 and lc channel 5
-    
-    completedata$cor_LC5_LC6[count]    <- cor(rundata$data.LC.V[,5],rundata$data.LC.V[,6]) # lc channel 5 and lc channel 6
-    
-    count = count + 1
-  }
-}
-
-write.csv(completedata, file="2020_10_23_ProcessedData.csv")
-
-timeseries_std <- function(timeseries,no_samples){
-  
-  data_std_sample = sd(timeseries)
-  # choose the number of lags to be the entire sample-1 
-  no_lags    <- no_samples - 1
-  
-  # compute autocorrelation of the timeseries but do not plot
-  autocor    <- acf(timeseries, lag = no_lags, pl = FALSE)
-  
-  sum_1 = 0
-  sum_2 = 0
-  for (j in 1:no_lags){
-    sum_1 = sum_1 + autocor$acf[j]*((no_samples-j)/no_samples) # Summation in Eqn. 12
-    sum_2 = sum_2 + autocor$acf[j]^2 # Summation in Eqn. 30
-  }
-
-  # effective independent samples in the data Eqn. 12
-  no_indsample          = no_samples/(1+2*sum_1)
-  # effective degrees of freedom in the entire sample Eqn. 30
-  no_dof                = (no_samples/(1+2*sum_2))-1
-  # correct the standard deviation to be unbiased for time series Eqn. 24b
-  correction            = no_indsample*(no_samples-1)/(no_samples*(no_indsample-1))
-  data_std_true         = sqrt(correction*data_std_sample^2)
-  results               = list()
-  results$data_std_true = data_std_true
-  results$no_dof        = no_dof
-  
-  return(results)
+  # -------------- Adjust forces appropriately -----------------------
+  LC_raw     = c(LC1,LC2,LC3,LC4,LC5,LC6) - c(LC1_off,LC2_off,LC3_off,LC4_off,LC5_off,LC6_off)
+  loads_LC   = ATI_cal*LC_raw
+  rotation   = rotz(alpha);
+  forces_WT  = rotz(alpha)*loads_LC[1:3]
+  moments_WT = rotz(alpha)*loads_LC[4:6]
 }
 
