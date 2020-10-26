@@ -6,8 +6,8 @@ timeseries_std <- function(timeseries,no_samples){
   # choose the number of lags to be the entire sample-1 
   no_lags    <- no_samples - 1
   
-  # compute autocorrelation of the timeseries but do not plot
-  autocor    <- acf(timeseries, lag = no_lags, pl = FALSE)
+  # compute autocorrelation of the timeseries but do not plot, for no window must select rectangular
+  autocor    <- fastacf(timeseries, lag.max = no_lags, show = FALSE, window = "rectangular")
   
   sum_1 = 0
   sum_2 = 0
@@ -55,9 +55,9 @@ calc_U <- function(fluidprop, M, PT_V_avg, offset){
   
   PT_avg            = M*(PT_V_avg-offset)                    # calculate the dynamic pressure
   velocityprop$U    = sqrt(PT_avg*2/fluidprop$rho_air)       # calculate the velocity  
-  velocityprop$Re_c = fluidprop$rho_air*U/fluidprop$visc_air # calculate the Reynolds number/chord
+  velocityprop$Re_c = fluidprop$rho_air*velocityprop$U/fluidprop$visc_air # calculate the Reynolds number/chord
 
-  return(fluidprop)
+  return(velocityprop)
 }
 
 
@@ -71,6 +71,23 @@ rotz <- function(angle){
   R[2,2] =  cosd(angle)
   R[3,3] = 1
   # set the error to 0
-  R <- lapply(R, function(x) set_errors(x, x*0))
+  errors(R) <- 0
   return(R)
+}
+
+
+## ------------------ Calculate the matrix*vector ------------
+# only meant to work for square matrices
+# inputs should both already have uncertainties assigned
+mult_matvec_err <- function(mat,vec){
+  dimen <- length(vec) # dimension of the vector
+  vec_out = vec        # initialize
+  for (i in 1:dimen){
+    tmp = 0
+    for (j in 1:dimen){
+      tmp = tmp + mat[i,j]*vec[j]
+    }
+    vec_out[i] = tmp
+  }
+  return(vec_out)
 }

@@ -6,9 +6,8 @@
 
 ## ---------------- Load libraries ----------------
 library(R.matlab)
-library(quantities)
-library(errors)
-
+library(phonTools)
+source("calc_basefunctions.R")
 ## ---------------- Pre-define folder names ----------------------
 folder_names <- c("09_28_F1380_high", "09_28_F1380_low", "09_28_F4352_high", "09_29_F2195_high","09_28_F2195_low",
                   "09_29_F4546_high", "09_29_F4546_low", "09_29_F4849_high", "09_29_F4849_low", "09_30_F3891_high",
@@ -17,12 +16,12 @@ folder_names <- c("09_28_F1380_high", "09_28_F1380_low", "09_28_F4352_high", "09
 folder_data <- c("/Users/Inman PC/Google Drive/DoctoralThesis/WindTunnel/2020_Gull_PassiveLongitudinalStudy/Data") #For Windows
 
 ## ---------------- Pre-define storage matrix ----------------------
-completedata        <- as.data.frame(matrix(nrow = 810, ncol = 5))
-names(completedata) <- c("FrameID","U_des","alpha","T_atm","T_atm_std")
+completedata        <- as.data.frame(matrix(nrow = 800, ncol = 3))
+names(completedata) <- c("FrameID","U_des","alpha")
 count = 1
 
 ## ---------------- Loop through each test folder ----------------------
-for (i in 1:1){
+for (i in 1:18){
 
   ## ---------------- Set Current Directory ----------------
   curr_folder <- paste(folder_data,"/2020_",folder_names[i],"_full",sep="")

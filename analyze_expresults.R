@@ -17,7 +17,7 @@ source("interaction_info.R")
 setwd("/Users/christinaharvey/Google Drive/DoctoralThesis/WindTunnel/2020_Gull_PassiveLongitudinalStudy/Data") #For MAC
 setwd("/Users/Inman PC/Google Drive/DoctoralThesis/WindTunnel/2020_Gull_PassiveLongitudinalStudy/Data") #For MAC
 
-dat_raw  <- read.csv('2020_09_WindTunnelCompleteData_full.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
+dat_raw  <- read.csv('2020_10_26_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing <- read.csv('2020_08_26_selectedwtwings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing$WingID = paste("F", dat_wing$frameID, sep = "")
 
@@ -36,22 +36,47 @@ first_stall_alpha = rbind(c(24,24), # F4849
                           c(23,22), # F3891
                           c(12,16), # F1380
                           c(14,20)) # F4546
-avg_root_chord = 0.1959887
-max_S          = 0.1644825
+avg_root_chord         = 0.1959887
+errors(avg_root_chord) = 
+avg_S                  = 0.1644825
+errors(avg_S)          =
 # **Probably want to non-dimensionalize by the full maximum avaiable wing area and the average root chord
 # merge the results with the geometry
 dat_full = merge(dat_raw,dat_wing, by ="WingID")
-dat_full$CL = dat_full$FL_wt_mean/(0.5*dat_full$rho*dat_full$U^2*dat_full$S)
-dat_full$CD = dat_full$FD_wt_mean/(0.5*dat_full$rho*dat_full$U^2*dat_full$S)
-dat_full$Cm = dat_full$Mm_wt_mean/(0.5*dat_full$rho*dat_full$U^2*dat_full$S*dat_full$MAC)
+# ----------- a few more calculations ----------- 
+L         = dat_full$L
+errors(L) = dat_full$L_std
+D         = dat_full$D
+errors(D) = dat_full$D_std
+m         = dat_full$m
+errors(m) = dat_full$m_std
 
-dat_full$CL_avg = dat_full$FL_wt_mean/(0.5*dat_full$rho*dat_full$U^2*(0.5*max_S))
-dat_full$CD_avg = dat_full$FD_wt_mean/(0.5*dat_full$rho*dat_full$U^2*(0.5*max_S))
-dat_full$Cm_avg = dat_full$Mm_wt_mean/(0.5*dat_full$rho*dat_full$U^2*(0.5*max_S)*avg_root_chord)
+rho         = dat_full$rho
+errors(rho) = dat_full$rho_std
+U           = dat_full$U
+errors(U)   = dat_full$U_std
+
+CL_avg = L/(0.5*rho*U^2*(0.5*max_S))
+CD_avg = D/(0.5*rho*U^2*(0.5*max_S))
+Cm_avg = m/(0.5*rho*U^2*(0.5*max_S)*avg_root_chord)
 # get to a number that is comparable to the numerical data
-dat_full$L_dim = dat_full$FL_wt_mean/(dat_full$rho*dat_full$U^2*(0.8)^2)
-dat_full$D_dim = dat_full$FD_wt_mean/(dat_full$rho*dat_full$U^2*(0.8)^2)
-dat_full$m_dim = dat_full$Mm_wt_mean/(dat_full$rho*dat_full$U^2*(0.8)^3)
+L_comp = L/(0.5*rho*U^2*(0.8)^2)
+D_comp = L/(0.5*rho*U^2*(0.8)^2)
+m_comp = L/(0.5*rho*U^2*(0.8)^3)
+
+# --------- Save the results in the master data frame ----------
+dat_full$CL_avg     = CL_avg
+dat_full$CL_avg_std = errors(CL_avg)
+dat_full$CD_avg     = CD_avg
+dat_full$CD_avg_std = errors(CD_avg)
+dat_full$Cm_avg     = Cm_avg
+dat_full$Cm_avg_std = errors(Cm_avg)
+dat_full$L_comp     = L_comp
+dat_full$L_comp_std = errors(L_comp)
+dat_full$D_comp     = D_comp
+dat_full$D_comp_std = errors(D_comp)
+dat_full$m_comp     = m_comp
+dat_full$m_comp_std = errors(m_comp)
 
 # Loop through every wing configuration and test to save key results
 for (i in 1:nrow(dat_wing)){
@@ -78,27 +103,27 @@ for (i in 1:nrow(dat_wing)){
     dat_stab_exp$b[count]        = mean(dat_curr$b)
     # ----- Determine the linear region ------
     # angle of attack where lift = 0 - uses extrapolation
-    lift_low  = -min(abs(dat_curr$L_dim[which(dat_curr$L_dim < 0)]))
-    lift_high = min(abs(dat_curr$L_dim[which(dat_curr$L_dim > 0)]))
-    dat_stab_exp$alpha_lift0[count]    = (lift_low*(dat_curr$alpha[which(dat_curr$L_dim == lift_high)]-dat_curr$alpha[which(dat_curr$L_dim == lift_low)])/(lift_high-lift_low)) + dat_curr$alpha[which(dat_curr$L_dim == lift_low)]
+    lift_low  = -min(abs(dat_curr$L_comp[which(dat_curr$L_comp < 0)]))
+    lift_high = min(abs(dat_curr$L_comp[which(dat_curr$L_comp > 0)]))
+    dat_stab_exp$alpha_lift0[count]    = (lift_low*(dat_curr$alpha[which(dat_curr$L_comp == lift_high)]-dat_curr$alpha[which(dat_curr$L_comp == lift_low)])/(lift_high-lift_low)) + dat_curr$alpha[which(dat_curr$L_comp == lift_low)]
     # angle of attack where pitch = 0 - uses extrapolation
     pitch_low  = -min(abs(dat_curr$m_dim[which(dat_curr$m_dim < 0)]))
     pitch_high = min(abs(dat_curr$m_dim[which(dat_curr$m_dim > 0)]))
     dat_stab_exp$alpha_pitch0[count]   = (pitch_low*(dat_curr$alpha[which(dat_curr$m_dim == pitch_high)]-dat_curr$alpha[which(dat_curr$m_dim == pitch_low)])/(pitch_high-pitch_low)) + dat_curr$alpha[which(dat_curr$m_dim == pitch_low)]
 
     # Maximum lift at the first stall point
-    dat_stab_exp$lift_max[count]       = dat_curr$L_dim[which(dat_curr$alpha == first_stall_alpha[i,j])]
+    dat_stab_exp$lift_max[count]       = dat_curr$L_comp[which(dat_curr$alpha == first_stall_alpha[i,j])]
 
     # Save the maximum lift to drag ratio
-    dat_stab_exp$LD_max[count]      <- max(dat_curr$FL_wt_mean/dat_curr$FD_wt_mean)
-    dat_stab_exp$alpha_L_D[count]   <- dat_curr$alpha[which.max(dat_curr$FL_wt_mean/dat_curr$FD_wt_mean)]
-    dat_stab_exp$LD_max_ci[count]   <- abs(dat_stab_exp$LD_max[count])*sqrt((dat_curr$FL_wt_ci[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])]/dat_curr$FL_wt_mean[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])])^2 + (dat_curr$FD_wt_ci[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])]/dat_curr$FD_wt_mean[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])])^2)
+    dat_stab_exp$LD_max[count]      <- max(dat_curr$L/dat_curr$D)
+    dat_stab_exp$alpha_L_D[count]   <- dat_curr$alpha[which.max(dat_curr$L/dat_curr$D)]
+    dat_stab_exp$LD_max_ci[count]   <- abs(dat_stab_exp$LD_max[count])*sqrt((dat_curr$FL_wt_ci[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])]/dat_curr$L[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])])^2 + (dat_curr$FD_wt_ci[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])]/dat_curr$D[which(dat_curr$alpha == dat_stab_exp$alpha_L_D[count])])^2)
     # Save the minimum drag
-    dat_stab_exp$D_min[count]       <- min(dat_curr$FD_wt_mean)
-    dat_stab_exp$D_dim_min[count]   <- min(dat_curr$D_dim)
+    dat_stab_exp$D_min[count]       <- min(dat_curr$D)
+    dat_stab_exp$D_comp_min[count]   <- min(dat_curr$D_comp)
     # Save the maximum lift before stall
-    dat_stab_exp$L_max[count]       <- dat_curr$FL_wt_mean[which(dat_curr$alpha == first_stall_alpha[i,j])]
-    dat_stab_exp$L_dim_max[count]   <- dat_curr$L_dim[which(dat_curr$alpha == first_stall_alpha[i,j])]
+    dat_stab_exp$L_max[count]       <- dat_curr$L[which(dat_curr$alpha == first_stall_alpha[i,j])]
+    dat_stab_exp$L_comp_max[count]   <- dat_curr$L_comp[which(dat_curr$alpha == first_stall_alpha[i,j])]
     # ----------------- Fit models to the linear range --------------------------
 
     # Define the linear data range
@@ -110,11 +135,11 @@ for (i in 1:nrow(dat_wing)){
       }
 
     #fit linear model to Cm vs. CL
-    mod.pstab  <- lm(m_dim~L_dim, data = dat_curr_lin)
+    mod.pstab  <- lm(m_dim~L_comp, data = dat_curr_lin)
     test       <- summary(mod.pstab)
     mod.pstaba <- lm(m_dim~alpha, data = dat_curr_lin)
-    mod.lift   <- lm(L_dim~alpha, data = dat_curr_lin)
-    mod.drag   <- lm(D_dim~poly(CL_avg,2), data = dat_curr) # doesn't need to be determined in the linear region
+    mod.lift   <- lm(L_comp~alpha, data = dat_curr_lin)
+    mod.drag   <- lm(D_comp~poly(CL_avg,2), data = dat_curr) # doesn't need to be determined in the linear region
 
     # save all info about the lnear model
     # ------------- Cm/CL -------------
@@ -176,9 +201,9 @@ for (i in 1:nrow(dat_wing)){
 }
 
 # Models that are used to compare to experimental results
-mod_con_cL_exp = lm(L_dim ~ elbow + manus + alpha, data = subset(dat_full, U <14))
+mod_con_cL_exp = lm(L_comp ~ elbow + manus + alpha, data = subset(dat_full, U <14))
 mod_con_cm_exp = lm(m_dim ~ elbow + manus + alpha, data = subset(dat_full, U <14))
-mod_con_cd_exp = lm(D_dim ~ elbow+manus + poly(alpha,2), data = subset(dat_full, U <14))
+mod_con_cd_exp = lm(D_comp ~ elbow+manus + poly(alpha,2), data = subset(dat_full, U <14))
 
 mod_cmcl_exp = lm(cmcl ~ elbow + manus, data = subset(dat_stab_exp, U < 14))
 mod_cm0_exp  = lm(cm0 ~ elbow + manus, data = subset(dat_stab_exp, U < 14))
