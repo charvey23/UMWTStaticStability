@@ -4,8 +4,8 @@
 ## ------------------------------------------------------------------
 
 # -------- Main theme ------------
-
-#--- Predfine the main theme ----
+ 
+#--- Predefine the main theme ----
 th <- theme_classic() +
   theme(
     # Text

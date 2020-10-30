@@ -9,7 +9,7 @@ library(R.matlab)
 library(phonTools)
 source("calc_basefunctions.R")
 ## ---------------- Pre-define folder names ----------------------
-folder_names <- c("09_28_F1380_high", "09_28_F1380_low", "09_28_F4352_high", "09_29_F2195_high","09_28_F2195_low",
+folder_names <- c("09_28_F1380_high", "09_28_F1380_low", "09_28_F4352_high", "09_29_F2195_high","09_29_F2195_low",
                   "09_29_F4546_high", "09_29_F4546_low", "09_29_F4849_high", "09_29_F4849_low", "09_30_F3891_high",
                   "09_30_F3891_low", "09_30_F4647_high", "09_30_F4647_low", "09_30_F4911_high", "10_01_F4911_low",
                   "10_01_F4352_low", "10_01_F6003_low", "10_01_F6003_high")
@@ -21,7 +21,7 @@ names(completedata) <- c("FrameID","U_des","alpha")
 count = 1
 
 ## ---------------- Loop through each test folder ----------------------
-for (i in 1:18){
+for (i in 5:18){
 
   ## ---------------- Set Current Directory ----------------
   curr_folder <- paste(folder_data,"/2020_",folder_names[i],"_full",sep="")
@@ -126,5 +126,5 @@ for (i in 1:18){
   }
 }
 
-write.csv(completedata, file="2020_10_23_ConcatenatedRawData.csv")
+write.csv(completedata, file="2020_10_24_ConcatenatedRawData.csv")
 
