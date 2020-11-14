@@ -1,31 +1,21 @@
 ## -------- Analyze wind tunnel data ----------
 
 ## ---------------- Load libraries ----------------
-library(ggplot2)
-library(ggthemes) # need for geom_rangeframe
-
-library(quantities) # needed for error propagation - uses first order Taylor series
-library(emmeans)  # for emmip https://stats.idre.ucla.edu/r/seminars/interactions-r/
-library(spatstat) # needed for the convex hull fitting
-library(ptinpoly) # need for determining points outside the convex hull
-
-## ---------------- Load functions ----------------
-setwd("/Users/christinaharvey/Google Drive/DoctoralThesis/StaticStability/AvianWingLLT") #For Windows
-source("interaction_info.R")
 
 ## This code reads in the output from the wind tunnel data on the 9 3D printed gull wings to extrapolate the key parameters
 setwd("/Users/Inman PC/Documents/UMWTStaticStability/Data") #For MAC
 
-dat_raw          <- read.csv('2020_10_26_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
+dat_raw          <- read.csv('2020_10_28_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing         <- read.csv('2020_08_26_selectedwtwings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
-dat_wing$FrameID <- paste("F", dat_wing$frameID, sep = "")
+dat_wing$FrameID <- paste("F", dat_wing$FrameID, sep = "")
 dat_raw$alpha    <- as.numeric(dat_raw$alpha)
 dat_raw$U        <- as.numeric(dat_raw$U)
 dat_exp          <- merge(dat_raw,dat_wing, by ="FrameID")
+remove(dat_raw)
 
 # pre-define the matrix
 dat_stab_exp  <- data.frame(matrix(nrow = 18, ncol = 3))
-names(dat_stab_exp) <- c("WingID","elbow","manus")
+names(dat_stab_exp) <- c("FrameID","elbow","manus")
 count = 1
 # manually input the stall angle of each wing; first column is low speed second column is high speed
 first_stall_alpha = rbind(c(24,24), # F4849
@@ -46,7 +36,7 @@ first_stall_alpha = rbind(c(24,24), # F4849
 for (i in 1:nrow(dat_wing)){
   for (j in 1:2){
 
-    curr_FrameID = paste("F", dat_wing$frameID[i], sep = "")
+    curr_FrameID = dat_wing$FrameID[i]
 
     if (j == 1){
       dat_curr <- subset(dat_exp, FrameID == curr_FrameID & U < 14)
@@ -94,7 +84,7 @@ for (i in 1:nrow(dat_wing)){
     # ----------------- Fit models to the linear range --------------------------
 
     # Define the linear data range
-    dat_curr_lin = subset(dat_curr, alpha < first_stall_alpha[i,j]-2 & alpha > dat_stab_exp$alpha_lift0[count]+2)
+    dat_curr_lin = subset(dat_curr, alpha < first_stall_alpha[i,j]-1 & alpha > dat_stab_exp$alpha_lift0[count])
       if (count == 1){
         dat_lin_exp  = dat_curr_lin
       } else{
@@ -106,9 +96,9 @@ for (i in 1:nrow(dat_wing)){
     test       <- summary(mod.pstab)
     mod.pstaba <- lm(m_comp~alpha, data = dat_curr_lin)
     mod.lift   <- lm(L_comp~alpha, data = dat_curr_lin)
-    mod.drag   <- lm(D_comp~poly(CL_avg,2), data = dat_curr) # doesn't need to be determined in the linear region
+    mod.drag   <- lm(D_comp~poly(L_comp,2), data = dat_curr) # doesn't need to be determined in the linear region
 
-    # save all info about the lnear model
+    # save all info about the linear model
     # ------------- Cm/CL -------------
     # Intercept
     dat_stab_exp$cm0[count]     <- summary(mod.pstab)$coefficients[1,1]
@@ -125,15 +115,41 @@ for (i in 1:nrow(dat_wing)){
     count = count + 1
   }
 }
+remove(dat_curr, mod.pstab, mod.pstaba, mod.lift, mod.drag, test, first_stall_alpha)
 
+## -------------------------------------------------------------------------------------
+## ------------------- Compare numerical and experimental data -------------------------
+## -------------------------------------------------------------------------------------
 
-## ------------------------------------------------------------------
-## ------------------- Longitudinal Control -------------------------
-## ------------------------------------------------------------------
+dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,31,32,33)]
+dat_num_simp$method <- "n"
+dat_exp_simp        <- subset(dat_exp, U < 14 & alpha <= 10 & alpha >= -10)[,c(1,4,47,48,38,40,42)]
+dat_exp_simp$method <- "e"
+dat_comp_simp       <- rbind(dat_exp_simp,dat_num_simp)
 
-mod_con_cL_exp = lm(L_comp ~ elbow + manus + alpha, data = subset(dat_exp, U <14))
-mod_con_cm_exp = lm(m_comp ~ elbow + manus + alpha, data = subset(dat_exp, U <14))
-mod_con_cd_exp = lm(D_comp ~ elbow + manus + poly(alpha,2), data = subset(dat_exp, U <14))
+dat_stab_exp_simp        <- subset(dat_stab_exp, U < 14)[,c(1,2,3,19,23)]
+dat_stab_exp_simp$method <- "e"
+dat_stab_num_simp        <- dat_stab_comp[,c(4,5,6,7,11)]
+dat_stab_num_simp$method <- "n"
+dat_stab_comp_simp       <- rbind(dat_stab_exp_simp,dat_stab_num_simp)
+remove(dat_stab_exp_simp,dat_stab_num_simp)
 
-mod_cmcl_exp = lm(cmcl ~ elbow + manus, data = subset(dat_stab_exp, U < 14))
-mod_cm0_exp  = lm(cm0 ~ elbow + manus, data = subset(dat_stab_exp, U < 14))
+# Models
+mod_comp_L    = lm(L_comp ~ elbow*manus + alpha + elbow:method + manus:method + elbow:manus:method + alpha:method + method, data = dat_comp_simp)
+mod_comp_m    = lm(m_comp ~ elbow*manus + alpha + elbow:method + manus:method + elbow:manus:method + alpha:method + method, data = dat_comp_simp)
+mod_comp_d    = lm(D_comp ~ elbow*manus + alpha + elbow:method + manus:method + elbow:manus:method + alpha:method + method, data = dat_comp_simp)
+
+mod_comp_cmcl = lm(cmcl ~ elbow*manus*method, data = dat_stab_comp_simp)
+mod_comp_cm0  = lm(cm0 ~ elbow*manus*method, data = dat_stab_comp_simp)
+
+dat_num_simp$error <- NA
+for (i in 1:length(dat_num_simp$FrameID)){
+  if (nrow(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i]))==0){
+    next
+  }
+  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp))
+}
+# output the average error for each angle of attack
+aggregate(dat_num_simp[, 9], list(dat_num_simp$alpha), mean)
+# select the angle of attack that will be used in the predictions
+alpha_select <- 0
