@@ -3,7 +3,7 @@
 ## ---------------- Load libraries ----------------
 
 ## This code reads in the output from the wind tunnel data on the 9 3D printed gull wings to extrapolate the key parameters
-setwd("/Users/Inman PC/Documents/UMWTStaticStability/Data") #For MAC
+setwd("/Users/christinaharvey/Documents/UMWTStaticStability/Data") #For MAC
 
 dat_raw          <- read.csv('2020_10_28_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing         <- read.csv('2020_08_26_selectedwtwings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
