@@ -11,8 +11,13 @@ setwd('/Users/christinaharvey/Google Drive/DoctoralThesis/StaticStability/AvianW
 
 # ----- All numerical results -------
 dat_num1        <- read.csv('2020_09_22_List_Converged_1e-8.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
+# remove wt wings
+wtwings         <- c("4849","4911","6003","2195","4647","4352","3891","1380","4546")
+dat_num1        <- dat_num1[-which(dat_num1[,4] %in% as.numeric(wtwings)),]
+# load wings where we had a pause after
 dat_num2        <- read.csv('2020_10_16_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
-dat_num3        <- read.csv('2020_11_13_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE) # needs to be updated
+# load rest of wings
+dat_num3        <- read.csv('2020_11_19_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE) # needs to be updated
 dat_num         <- rbind(dat_num1,dat_num2,dat_num3)
 names(dat_num) <- c("species","WingID","TestID","FrameID","elbow","manus","alpha","U","build_err_max","date","S","ref_c","b_MX","MAC","b","sweep","dihedral","twist",'relax',"CL","CD","Cm","FL","FD","Mm")
 dat_num$FrameID <- paste("F", dat_num$FrameID, sep = "")
@@ -33,6 +38,12 @@ dat_num$S_max[which(dat_num$WingID == "16_0048")] = max(dat_num$S[which(dat_num$
 dat_num$CL_adj = dat_num$FL/(q*dat_num$S_max)
 dat_num$CD_adj = dat_num$FD/(q*dat_num$S_max)
 dat_num$Cm_adj = dat_num$Mm/(q*dat_num$S_max*dat_num$c_max)
+
+# ----- Check the relationship between the total force production and the wing area -----
+mod_area_lift  <- lm(FL ~ S + S_max + alpha, data = dat_num)
+mod_area_pitch <- lm(Mm ~ S + S_max + ref_c + c_max + alpha, data = dat_num)
+mod_area_joints <- lm(S/S_max ~ elbow*manus + I(elbow^2) + I(manus^2) +I(elbow^3) + I(manus^3), data = dat_num)
+
 # ----- Data to compare to wind tunnel data -------
 wtwings = c("F4849","F4911","F6003","F2195","F4647","F4352","F3891","F1380","F4546")
 # get to a number that is comparable to the experimental data
@@ -178,9 +189,7 @@ cut_trueshape <- function(dat,dat_geom,col_elbow,col_manus){
   return(dat_return)
 }
 
-
-
-# Generate dataframe with every possible combination of elbow and wrist
+# Generate data frame with every possible combination of elbow and wrist
 xgrid <-  seq(floor(min(dat_num$elbow)), ceiling(max(dat_num$elbow)), 1)
 ygrid <-  seq(floor(min(dat_num$manus)), ceiling(max(dat_num$manus)), 1)
 data.fit       <- expand.grid(elbow = xgrid, manus = ygrid)
