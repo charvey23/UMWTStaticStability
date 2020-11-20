@@ -9,11 +9,14 @@ library(alphahull) # needed for the convex hull
 ## ---------------- Load data ----------------
 setwd('/Users/christinaharvey/Google Drive/DoctoralThesis/StaticStability/AvianWingLLT')
 
+# ----- All wing shapes read into the code -------------
+dat_all <- read.csv('2020_05_25_OrientedWings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
+dat_all <- subset(dat_all, species == "lar_gla" & sweep == 0 & dihedral == 0)
+
 # ----- All numerical results -------
 dat_num1        <- read.csv('2020_09_22_List_Converged_1e-8.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
 # remove wt wings
-wtwings         <- c("4849","4911","6003","2195","4647","4352","3891","1380","4546")
-dat_num1        <- dat_num1[-which(dat_num1[,4] %in% as.numeric(wtwings)),]
+dat_num1        <- dat_num1[-which(dat_num1[,2] == "17_0285"),]
 # load wings where we had a pause after
 dat_num2        <- read.csv('2020_10_16_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
 # load rest of wings
@@ -22,6 +25,8 @@ dat_num         <- rbind(dat_num1,dat_num2,dat_num3)
 names(dat_num) <- c("species","WingID","TestID","FrameID","elbow","manus","alpha","U","build_err_max","date","S","ref_c","b_MX","MAC","b","sweep","dihedral","twist",'relax',"CL","CD","Cm","FL","FD","Mm")
 dat_num$FrameID <- paste("F", dat_num$FrameID, sep = "")
 remove(dat_num1,dat_num2,dat_num3)
+# remove wings that had unphysical dihedral for some reason
+dat_num <- dat_num[-which(dat_num$dihedral < -90),]
 # dynamic pressure
 q <- 0.5*1.225*(10^2)
 
@@ -38,11 +43,7 @@ dat_num$S_max[which(dat_num$WingID == "16_0048")] = max(dat_num$S[which(dat_num$
 dat_num$CL_adj = dat_num$FL/(q*dat_num$S_max)
 dat_num$CD_adj = dat_num$FD/(q*dat_num$S_max)
 dat_num$Cm_adj = dat_num$Mm/(q*dat_num$S_max*dat_num$c_max)
-
-# ----- Check the relationship between the total force production and the wing area -----
-mod_area_lift  <- lm(FL ~ S + S_max + alpha, data = dat_num)
-mod_area_pitch <- lm(Mm ~ S + S_max + ref_c + c_max + alpha, data = dat_num)
-mod_area_joints <- lm(S/S_max ~ elbow*manus + I(elbow^2) + I(manus^2) +I(elbow^3) + I(manus^3), data = dat_num)
+dat_num$S_ref  = dat_num$S/dat_num$S_max
 
 # ----- Data to compare to wind tunnel data -------
 wtwings = c("F4849","F4911","F6003","F2195","F4647","F4352","F3891","F1380","F4546")
@@ -52,12 +53,8 @@ dat_num$D_comp = (0.5*dat_num$FD)/q
 dat_num$m_comp = (0.5*dat_num$Mm)/q
 
 # ----- Create dataframe with a single row per FrameID --------------
-dat_wingspec <- unique(dat_num[c("WingID","TestID","FrameID","elbow","manus","species")])
+dat_wingspec <- unique(dat_num[c("WingID","TestID","FrameID","elbow","manus","species","twist","sweep","dihedral","S_ref","c_max")])
 no_testedconfigs = nrow(dat_wingspec)
-
-# ----- All wing shapes read into the code -------------
-dat_all <- read.csv('2020_05_25_OrientedWings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
-dat_all <- subset(dat_all, species == "lar_gla" & sweep == 0 & dihedral == 0)
 
 ## -------------------------------------------------------------------
 ## ---------------- Compute the stability derivatives ----------------
@@ -73,7 +70,9 @@ compare = FALSE
 for (m in 1:no_testedconfigs){
   
   # subset data to be of one wing configuration at a time
-  dat_curr <- subset(dat_num, species == dat_wingspec$species[m] & WingID == dat_wingspec$WingID[m] & TestID == dat_wingspec$TestID[m] & FrameID == dat_wingspec$FrameID[m])
+  dat_curr <- subset(dat_num, 
+                     species == dat_wingspec$species[m] & WingID == dat_wingspec$WingID[m] & 
+                       TestID == dat_wingspec$TestID[m] & FrameID == dat_wingspec$FrameID[m])
   
   # save all wing specific information  
   dat_stab$species[count] <- as.character(dat_wingspec$species[m])
@@ -119,7 +118,7 @@ for (m in 1:no_testedconfigs){
     mod.drag   <- lm(CD_adj~poly(alpha,2), data = dat_curr)
     }
     
-    # save all info about the lnear model
+    # save all info about the linear model
     # ------------- Cm/CL ------------- 
     # Intercept
     dat_stab$cm0[count]     <- summary(mod.pstab)$coefficients[1,1]
@@ -145,26 +144,48 @@ if (compare){
 }
 remove(dat_curr, mod.pstab, mod.pstaba, mod.lift, mod.drag, test)
 
+dat_stab  <- merge(dat_stab,dat_wingspec, by =c("FrameID","WingID","TestID","elbow","manus"))
+dat_stab$x_int <- -dat_stab$cm0/dat_stab$cmcl
 ## -------------------------------------------------------------------
 ## ----------------- Compute the control derivatives -----------------
 ## -------------------------------------------------------------------
 # define control models - 
-# NOTE: These models are selected using Aikaike Criterion assuming that they have polynomial relationships
+# NOTE: These models are selected using Akaike Criterion assuming that they have polynomial relationships
 mod_con_cL_num = lm(CL_adj ~ elbow*manus*alpha + I(alpha^2) + I(alpha^3) + 
                       I(elbow^2) + 
-                      I(manus^2) + I(manus^3), data = dat_num)
+                      I(manus^2) + I(manus^3), data = subset(dat_num,alpha < 5))
+mod_con_cL_geo = lm(CL_adj ~ twist + sweep + dihedral + alpha + I(alpha^2) + I(alpha^3), data = subset(dat_num,alpha < 5))
 
-mod_con_cm_num = lm(Cm_adj ~ elbow*manus*CL_adj + I(CL_adj^2) + 
+mod_con_cm_num = lm(Cm_adj ~ elbow*manus*CL_adj + I(CL_adj^2) + I(CL_adj^3) + 
                       I(elbow^2) + 
-                      I(manus^2) + I(manus^3), data = dat_num)
+                      I(manus^2) + I(manus^3), data = subset(dat_num,alpha < 5))
+mod_con_cm_geo = lm(Cm_adj ~ twist + sweep + dihedral + alpha + I(alpha^2) + I(alpha^3), data = subset(dat_num,alpha < 5))
 
 mod_cmcl_num  = lm(cmcl ~ elbow*manus + 
                      I(elbow^2) + 
                      I(manus^2), data = dat_stab)
 
 mod_cm0_num   = lm(cm0 ~ elbow*manus + 
-                     I(elbow^2) + I(elbow^3) + 
+                     I(elbow^2) + I(elbow^3) +
                      I(manus^2) + I(manus^3), data = dat_stab)
+mod_cm0_twist   = lm(cm0 ~ twist + I(twist^2) + I(twist^3) + 
+                       dihedral + I(dihedral^2) + I(dihedral^3) + 
+                       sweep , data = dat_stab)
+
+## models for how elbow and wrist affect twist
+mod_twist = lm(twist ~ elbow*manus +
+                      I(elbow^2) + I(elbow^3) +
+                      I(manus^2) + I(manus^3), data = dat_wingspec)
+mod_sweep = lm(sweep ~ elbow+manus +
+                 I(elbow^2) + I(elbow^3) +
+                 I(manus^2), data = dat_wingspec)
+mod_dihedral = lm(dihedral ~ elbow*manus +
+                 I(elbow^2) + I(elbow^3) +
+                 I(manus^2) + I(manus^3), data = dat_wingspec)
+mod_S = lm(S_ref ~ elbow*manus +
+                    I(elbow^2) + I(elbow^3) +
+                    I(manus^2) + I(manus^3), data = dat_wingspec)
+
 
 ## Remove points in the predicted that are outside of the convex hull
 cut_trueshape <- function(dat,dat_geom,col_elbow,col_manus){
@@ -202,9 +223,16 @@ remove(xgrid,ygrid)
 # --- Predict data based on the control models --------
 data.fit$CL_adj  <-  predict(mod_con_cL_num, newdata = data.fit)
 data.fit$Cm_adj  <-  predict(mod_con_cm_num, newdata = data.fit)
+data.fit$twist   <-  predict(mod_twist, newdata = data.fit)
+data.fit$sweep   <-  predict(mod_sweep, newdata = data.fit)
+data.fit$dihedral   <-  predict(mod_dihedral, newdata = data.fit)
+data.fit$S_ref   <-  predict(mod_S, newdata = data.fit)
 
 data.fit.stab$cmcl  <-  predict(mod_cmcl_num, newdata = data.fit.stab)
 data.fit.stab$cm0   <-  predict(mod_cm0_num, newdata = data.fit.stab)
+
+# discussing the distance of static margin
+max(dat_stab$cmcl*dat_stab$c_max) -min(dat_stab$cmcl*dat_stab$c_max)
 
 ## -------------------------------------------------------------------
 ## ----------------- Compute the pathway derivatives -----------------

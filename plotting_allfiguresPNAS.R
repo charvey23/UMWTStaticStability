@@ -14,7 +14,7 @@ th <- theme_classic() +
     # Text
     axis.title = element_text(size = 10),
     plot.title = element_text(hjust = 0.5),
-    axis.text = element_text(size = 9, colour = "black"),
+    axis.text = element_text(size = 8, colour = "black"),
     axis.text.x = element_text(margin = margin(t = 10, unit = "pt")),
     axis.text.y = element_text(margin = margin(r = 10)),
     # Axis line
@@ -221,12 +221,12 @@ plot_rom <- ggplot() +
 dat_exp$FrameID <- factor(dat_exp$FrameID, levels = c("F6003","F4352","F4546","F4911","F4647","F1380","F4849","F2195","F3891"))
 dat_num_simp$FrameID <- factor(dat_num_simp$FrameID, levels = c("F6003","F4352","F4546","F4911","F4647","F1380","F4849","F2195","F3891"))
 dat_num$FrameID <- factor(dat_num$FrameID, levels = c("F6003","F4352","F4546","F4911","F4647","F1380","F4849","F2195","F3891"))
-
+## --------------------------- Panel D ------------------------------
 plot_cl_num_exp <- ggplot() +
   #experimental data
-  geom_errorbar(data= subset(dat_exp, U < 14 & alpha < 10 & alpha > -10), 
+  geom_errorbar(data= subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
                 aes(x = alpha, ymin=L_comp-2*L_comp_std, ymax=L_comp+2*L_comp_std, col = FrameID), col = col_num, alpha = 0.6, width = 0) +
-  geom_point(data = subset(dat_exp, U < 14 & alpha < 10 & alpha > -10), 
+  geom_point(data = subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
              aes(x = alpha, y=L_comp), col = col_num, fill = "white", pch = 22, size = 0.9) +
   # numerical data
   geom_line(data = dat_num_simp, aes(x = alpha, y=L_comp), col = "black", size =0.5, alpha = 0.9) + 
@@ -239,14 +239,14 @@ plot_cl_num_exp <- ggplot() +
   scale_y_continuous(limits = c(-0.036,0.093), name = lab_cl_comp, breaks = c(-0.03,0,0.03,0.06,0.09), labels = c(-3,0,3,6,9)) +
   annotate(geom = "segment", x = -10,    xend = 10,     y = log(0), yend = log(0)) + 
   annotate(geom = "segment", x = log(0), xend = log(0), y = -0.03, yend = 0.09)
-
+## --------------------------- Panel E ------------------------------
 plot_cmcl_num_exp <- ggplot() +
   # data addition 
-  geom_errorbar(data= subset(dat_exp, U < 14 & alpha < 10 & alpha > -10), 
+  geom_errorbar(data= subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
                 aes(x= L_comp, ymin=m_comp-2*m_comp_std, ymax=m_comp+2*m_comp_std, col = FrameID), col = col_num, alpha = 0.6) +
-  geom_errorbarh(data= subset(dat_exp, U < 14 & alpha < 10 & alpha > -10), 
+  geom_errorbarh(data= subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
                 aes(xmin=L_comp-2*L_comp_std, xmax=L_comp+2*L_comp_std, y=m_comp, col = FrameID), col = col_num, alpha = 0.6) +
-  geom_point(data = subset(dat_exp, U < 14 & alpha < 10 & alpha > -10), 
+  geom_point(data = subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
              aes(x = L_comp, y=m_comp), col = col_num, fill = "white", pch = 22, size = 0.9) +
   geom_line(data = subset(dat_num, FrameID %in% wtwings & WingID == "17_0285"), aes(x = L_comp, y=m_comp), col = "black", size =0.5, alpha = 0.9) + 
   # theme control
@@ -318,14 +318,21 @@ figure2_final <- ggdraw() + # export as 6.5x8
 ## --------------------------- Panel A ------------------------------
 plot_con_cL <- ggplot() +
   # data
-  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = CL_adj), alpha = 0.8)+
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = CL_adj), alpha = 0.8, size = 0.2)+
   stat_contour(data = data.fit, aes(x = elbow, y = manus, z = CL_adj, colour = ..level..),
-               breaks = quantile(data.fit$CL_adj, seq(0, 1, 0.1)), size = 0.8) +
+               breaks = quantile(data.fit$CL_adj, seq(0, 1, 0.1)), size = 0.4) +
   # colour control 
   scale_colour_gradientn(colors = rev(cc_L), name = lab_cl) +
   # theme control
   th +
-  theme(legend.position = 'right') +
+  theme(
+    legend.position = c(0.95,0.1),
+    legend.justification = c("right", "bottom"),
+    legend.box.just = "right",
+    legend.margin = margin(3, 3, 3, 3),
+    legend.key.size = unit(0.25, "cm"),
+    legend.text = element_text(size = 7, colour = "black"),
+    legend.title = element_text(size = 7, colour = "black")) +
   # axis control
   coord_fixed()+
   scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) + 
@@ -334,20 +341,27 @@ plot_con_cL <- ggplot() +
   annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
   annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
 # save legend then remove
-legend_cL <- g_legend(plot_con_cL)
-plot_con_cL <- plot_con_cL + theme(legend.position = 'none')
+#legend_cL <- g_legend(plot_con_cL)
+#plot_con_cL <- plot_con_cL + theme(legend.position = 'none')
 
 ## --------------------------- Panel B ------------------------------
 plot_con_cm <- ggplot() +
   # data
-  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = Cm_adj), alpha = 0.8)+
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = Cm_adj), alpha = 0.8, size = 0.2)+
   stat_contour(data = data.fit, aes(x = elbow, y = manus, z = Cm_adj, colour = ..level..),
-               breaks = quantile(data.fit$Cm_adj, seq(0, 1, 0.1)), size = 0.8) +
+               breaks = quantile(data.fit$Cm_adj, seq(0, 1, 0.1)), size = 0.4) +
   # colour control 
   scale_colour_gradientn(colors = cc_m, name = lab_cm) +
   # theme control
   th +
-  theme(legend.position = 'right') +
+  theme(
+    legend.position = c(1.1,0.1),
+    legend.justification = c("right", "bottom"),
+    legend.box.just = "right",
+    legend.margin = margin(3, 3, 3, 3),
+    legend.key.size = unit(0.25, "cm"),
+    legend.text = element_text(size = 7, colour = "black"),
+    legend.title = element_text(size = 7, colour = "black")) +
   # axis control
   coord_fixed()+
   scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) +
@@ -355,22 +369,26 @@ plot_con_cm <- ggplot() +
   geom_rangeframe() +
   annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
   annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
-# save legend then remove
-legend_cm <- g_legend(plot_con_cm)
-plot_con_cm <- plot_con_cm + theme(legend.position = 'none')
 
 
 ## --------------------------- Panel C ------------------------------
 plot_con_cmcl <- ggplot() +
   # data
-  geom_point(data = dat_stab, aes(x = elbow, y = manus, col = cmcl), alpha = 0.8)+
+  geom_point(data = dat_stab, aes(x = elbow, y = manus, col = cmcl), alpha = 0.8, size = 0.2)+
   stat_contour(data = data.fit.stab, aes(x = elbow, y = manus, z = cmcl, colour = ..level..),
-               breaks = quantile(data.fit.stab$cmcl, seq(0, 1, 0.1)), size = 0.8) +
+               breaks = quantile(data.fit.stab$cmcl, seq(0, 1, 0.1)), size = 0.4) +
   # colour control 
   scale_colour_gradientn(colors = cc_cmcl, name = lab_cmcl) +
   # theme control
   th + 
-  theme(legend.position = 'right') +
+  theme(
+    legend.position = c(1.2,0.1),
+    legend.justification = c("right", "bottom"),
+    legend.box.just = "right",
+    legend.margin = margin(3, 3, 3, 3),
+    legend.key.size = unit(0.25, "cm"),
+    legend.text = element_text(size = 7, colour = "black"),
+    legend.title = element_text(size = 7, colour = "black")) +
   # axis control
   coord_fixed()+
   scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) + 
@@ -378,21 +396,25 @@ plot_con_cmcl <- ggplot() +
   geom_rangeframe() +
   annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
   annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
-# save legend then remove
-legend_cmcl <- g_legend(plot_con_cmcl)
-plot_con_cmcl <- plot_con_cmcl + theme(legend.position = 'none')
 
 ## --------------------------- Panel D ------------------------------
 plot_con_cm0 <- ggplot() +
   # data
-  geom_point(data = dat_stab, aes(x = elbow, y = manus, col = cm0), alpha = 0.8) +
+  geom_point(data = dat_stab, aes(x = elbow, y = manus, col = cm0), alpha = 0.8, size = 0.2) +
   stat_contour(data = data.fit.stab, aes(x = elbow, y = manus, z = cm0, colour = ..level..),
-               breaks = quantile(data.fit.stab$cm0, seq(0, 1, 0.1)), size = 0.8) +
+               breaks = quantile(data.fit.stab$cm0, seq(0, 1, 0.1)), size = 0.4) +
   # colour control 
   scale_colour_gradientn(colors = rev(cc_cm0), name = lab_cm0) +
   # theme control
   th + 
-  theme(legend.position = 'right') + 
+  theme(
+    legend.position = c(1.08,0.1),
+    legend.justification = c("right", "bottom"),
+    legend.box.just = "right",
+    legend.margin = margin(3, 3, 3, 3),
+    legend.key.size = unit(0.25, "cm"),
+    legend.text = element_text(size = 7, colour = "black"),
+    legend.title = element_text(size = 7, colour = "black")) +
   # axis control
   coord_fixed()+
   scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) + 
@@ -400,34 +422,19 @@ plot_con_cm0 <- ggplot() +
   geom_rangeframe() +
   annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
   annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0)) 
-# save legend then remove
-legend_cm0 <- g_legend(plot_con_cm0)
-plot_con_cm0 <- plot_con_cm0 + theme(legend.position = 'none')
+
 # ----------------------------------- Combine data panels ------------------------------------------
-toprow <- plot_grid(plot_con_cL,legend_cL,plot_con_cm, legend_cm,
+figure3_final <- plot_grid(plot_con_cL,plot_con_cm,plot_con_cm0, plot_con_cmcl,
                     #arrangement data
                     ncol = 4,
-                    rel_widths = c(1,0.2,1,0.2),
+                    rel_widths = c(1,1,1,1),
                     #labels
-                    labels = c("A","","B",""),
+                    labels = c("A","B","C","D"),
                     label_size = 10,
                     label_fontfamily = "sans")
 
-bottomrow <- plot_grid(plot_con_cm0,legend_cm0, plot_con_cmcl, legend_cmcl,
-                    #arrangement data
-                    ncol = 4,
-                    rel_widths = c(1,0.2,1,0.2),
-                    #labels
-                    labels = c("C","","D",""),
-                    label_size = 10,
-                    label_fontfamily = "sans")
-
-#exported as 7.5x9
-figure3_final <- plot_grid(toprow,bottomrow,
-                       #arrangement data
-                       ncol = 1, nrow = 2, rel_heights = c(1,1))
-
-
+#exported as 7.5x9 - when in the square arrangement
+# exported as 3x9 when in the line arrangement
 ## ------------------------------------------------------------------
 ## ------------------------- Figure 4 -------------------------------
 ## ------------------------------------------------------------------
@@ -767,4 +774,80 @@ pathcolumn <- plot_grid(plot_con_cl_path,plot_con_cm_path,plot_con_cmcl_path,plo
 figure4_final <- plot_grid(firstcolumn,planformcolumn,pathcolumn,
                            #arrangement data
                            ncol = 3, rel_heights = c(2.5,0.5,1))
+## ----------------------------------------------------------------
+## ---------------------- Supplemental figures --------------------
+## ----------------------------------------------------------------
 
+plot_twist <- ggplot() +
+  # data
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = twist), alpha = 0.8)+
+  stat_contour(data = data.fit, aes(x = elbow, y = manus, z = twist, colour = ..level..),
+               breaks = quantile(data.fit$twist, seq(0, 1, 0.1)), size = 0.8) +
+  # colour control 
+  scale_colour_gradientn(colors = cc_m, name = lab_cm) +
+  # theme control
+  th +
+  theme(legend.position = 'right') +
+  # axis control
+  coord_fixed()+
+  scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) +
+  scale_y_continuous(limits = c(100,180), breaks = c(100,120,140,160,180), name = lab_manus) +
+  geom_rangeframe() +
+  annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
+  annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
+
+
+plot_sweep <- ggplot() +
+  # data
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = sweep), alpha = 0.8)+
+  stat_contour(data = data.fit, aes(x = elbow, y = manus, z = sweep, colour = ..level..),
+               breaks = quantile(data.fit$sweep, seq(0, 1, 0.1)), size = 0.8) +
+  # colour control 
+  scale_colour_gradientn(colors = cc_m, name = lab_cm) +
+  # theme control
+  th +
+  theme(legend.position = 'right') +
+  # axis control
+  coord_fixed()+
+  scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) +
+  scale_y_continuous(limits = c(100,180), breaks = c(100,120,140,160,180), name = lab_manus) +
+  geom_rangeframe() +
+  annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
+  annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
+
+
+plot_dihedral <- ggplot() +
+  # data
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = dihedral), alpha = 0.8)+
+  stat_contour(data = data.fit, aes(x = elbow, y = manus, z = dihedral, colour = ..level..),
+               breaks = quantile(data.fit$dihedral, seq(0, 1, 0.1)), size = 0.8) +
+  # colour control 
+  scale_colour_gradientn(colors = cc_m, name = lab_cm) +
+  # theme control
+  th +
+  theme(legend.position = 'right') +
+  # axis control
+  coord_fixed()+
+  scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) +
+  scale_y_continuous(limits = c(100,180), breaks = c(100,120,140,160,180), name = lab_manus) +
+  geom_rangeframe() +
+  annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
+  annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
+
+plot_S <- ggplot() +
+  # data
+  geom_point(data = subset(dat_num, alpha == 0), aes(x = elbow, y = manus, col = S_ref), alpha = 0.8)+
+  stat_contour(data = data.fit, aes(x = elbow, y = manus, z = S_ref, colour = ..level..),
+               breaks = quantile(data.fit$S_ref, seq(0, 1, 0.1)), size = 0.8) +
+  # colour control 
+  scale_colour_gradientn(colors = cc_m, name = lab_cm) +
+  # theme control
+  th +
+  theme(legend.position = 'right') +
+  # axis control
+  coord_fixed()+
+  scale_x_continuous(limits = c(80,168), breaks = c(80,100,120,140,160), name = lab_elbow) +
+  scale_y_continuous(limits = c(100,180), breaks = c(100,120,140,160,180), name = lab_manus) +
+  geom_rangeframe() +
+  annotate(geom = "segment", x = log(0), xend = log(0), y = 100, yend = 180) +
+  annotate(geom = "segment", x = 80, xend = 160, y = log(0), yend = log(0))
