@@ -3,9 +3,9 @@
 ## ---------------- Load libraries ----------------
 
 ## This code reads in the output from the wind tunnel data on the 9 3D printed gull wings to extrapolate the key parameters
-setwd("/Users/christinaharvey/Documents/UMWTStaticStability/Data") #For MAC
+setwd("/Users/christinaharvey/Documents/UMWTStaticStability/Data") 
 
-dat_raw          <- read.csv('2020_10_28_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
+dat_raw          <- read.csv('2020_11_30_ProcessedData.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing         <- read.csv('2020_08_26_selectedwtwings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
 dat_wing$FrameID <- paste("F", dat_wing$FrameID, sep = "")
 dat_raw$alpha    <- as.numeric(dat_raw$alpha)
@@ -26,7 +26,7 @@ first_stall_alpha = rbind(c(24,24), # F4849
                           c(16,23), # F4352
                           c(23,22), # F3891
                           c(12,16), # F1380
-                          c(14,20)) # F4546
+                          c(12,20)) # F4546
 
 ## ------------------------------------------------------------------
 ## ------------------ Longitudinal Stability ------------------------
@@ -92,7 +92,7 @@ for (i in 1:nrow(dat_wing)){
       }
 
     #fit linear model to Cm vs. CL
-    mod.pstab  <- lm(m_comp~L_comp, data = dat_curr_lin)
+    mod.pstab  <- lm(Cm~L_comp, data = dat_curr_lin)
     test       <- summary(mod.pstab)
     mod.pstaba <- lm(m_comp~alpha, data = dat_curr_lin)
     mod.lift   <- lm(L_comp~alpha, data = dat_curr_lin)
@@ -121,7 +121,7 @@ remove(dat_curr, mod.pstab, mod.pstaba, mod.lift, mod.drag, test, first_stall_al
 ## ------------------- Compare numerical and experimental data -------------------------
 ## -------------------------------------------------------------------------------------
 
-dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,31,32,33)]
+dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,36,37,38)]
 dat_num_simp$method <- "n"
 dat_exp_simp        <- subset(dat_exp, U < 14 & alpha <= 10 & alpha >= -10)[,c(1,4,47,48,38,40,42)]
 dat_exp_simp$method <- "e"
@@ -147,9 +147,43 @@ for (i in 1:length(dat_num_simp$FrameID)){
   if (nrow(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i]))==0){
     next
   }
-  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp))
+  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp))
 }
 # output the average error for each angle of attack
 aggregate(dat_num_simp[, 9], list(dat_num_simp$alpha), mean)
 # select the angle of attack that will be used in the predictions
 alpha_select <- 0
+
+## Experimental Re number
+min(dat_exp$Re_c[which(dat_exp$U < 14)])*0.2201308*0.8
+max(dat_exp$Re_c[which(dat_exp$U < 14)])*0.2201308*0.8
+(1.225*10/(1.81*10^-5))*0.2201308
+
+## To check that the ranges remain constant 
+
+max(subset(dat_exp, alpha == 2)$L_comp)-min(subset(dat_exp, alpha == 2)$L_comp)
+
+###------------------------------------------------------------------------------------------------------------------------------
+###------------------------------------------------------------------------------------------------------------------------------
+## --------------------------------------------- COMPARE TO TAXIDERMIED WINGS --------------------------------------------------- 
+###------------------------------------------------------------------------------------------------------------------------------
+###------------------------------------------------------------------------------------------------------------------------------
+
+# can't really be done since I don't now the maximum available chord on each of the posed wings to non-dimensionalize
+test <- subset(fit_results, Grid == "NoGrid")
+test <- merge(test,subset(pc_results, dataset %in% "windtunnel" & orientation %in% "hand"), by.x = c("WingID"), by.y = c("ID"))
+test <- merge(test,subset(gullinfo[,c("WingID","Grid","Root.Chord")], Grid %in% "NoGrid"), by.x = c("WingID"), by.y = c("WingID"))
+test_curr <- merge(dat_stab_exp,dat_all[which(dat_all$WingID == "17_0285"),c("FrameID","c_root")], by = c("FrameID"))
+                   
+clean_test <- test[,c("elbow.angle","manus.angle","Root.Chord")]
+clean_test$elbow_scale <- clean_test$elbow.angle/1000
+clean_test$manus_scale <- clean_test$manus.angle/1000
+clean_test$pred_cmcl   <- predict(mod_cmcl_num, newdata = clean_test, re.form = ~0)
+clean_test$pred_cmcl   <- clean_test$pred_cmcl*(clean_test$Root.Chord/100) # make the most comparable to the wind tunnel results
+
+plot(test$Angle.True,test$slopemean, col = "red")         # prepared wing results
+plot(clean_test$elbow.angle,clean_test$pred_cmcl)       # predicted results from our model
+plot(test_curr$elbow,test_curr$cmcl*test_curr$c_root, col = "blue") 
+
+plot(dat$Lift[which(dat$Angle.True > 80)],dat$Pitch[which(dat$Angle.True > 80)])
+points(dat_exp$L[which(dat_exp$manus > 150)],dat_exp$m[which(dat_exp$manus > 150)], col = "red")
