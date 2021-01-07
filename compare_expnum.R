@@ -1,4 +1,11 @@
-dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,31,32,33)]
+# Change the comparable values to the morphing coefficients
+dat_num$L_comp <- dat_num$L_comp/(dat_num$S_max)
+dat_num$m_comp <- dat_num$m_comp/(dat_num$S_max*dat_num$c_max)
+
+dat_exp$L_comp <- dat_exp$L_comp/(max(dat_num$S[which(dat_num$WingID == "17_0285")]))
+dat_exp$m_comp <- dat_exp$m_comp/(max(dat_num$S[which(dat_num$WingID == "17_0285")])*max(dat_num$ref_c[which(dat_num$WingID == "17_0285")]))
+
+dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,36,37,38)]
 dat_num_simp$method <- "n"
 dat_exp_simp        <- subset(dat_exp, U < 14 & alpha < 10 & alpha > -10)[,c(1,4,47,48,38,40,42)]
 dat_exp_simp$method <- "e"

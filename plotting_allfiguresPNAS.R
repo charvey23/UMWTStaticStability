@@ -226,7 +226,7 @@ dat_num$FrameID <- factor(dat_num$FrameID, levels = c("F6003","F4352","F4546","F
 plot_cl_num_exp <- ggplot() +
   #experimental data
   geom_errorbar(data= subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
-                aes(x = alpha, ymin=L_comp-2*L_comp_std, ymax=L_comp+2*L_comp_std, col = FrameID), col = col_num, alpha = 0.6, width = 0) +
+                aes(x = alpha, ymin=(L_comp-2*L_comp_std), ymax=(L_comp+2*L_comp_std), col = FrameID), col = col_num, alpha = 0.6, width = 0) +
   geom_point(data = subset(dat_exp, U < 14 & alpha < 11 & alpha > -11), 
              aes(x = alpha, y=L_comp), col = col_num, fill = "white", pch = 22, size = 0.9) +
   # numerical data

@@ -315,7 +315,28 @@ for (i in 1:4){
 }
 dat_contour$path <- factor(dat_contour$path, levels = c("con_cl","con_cm","con_cmcl","linkage"))
 dat_contour$type <- factor(dat_contour$type, levels = c("CL","Cm","CmCL","Cm0"))
+
 remove(dat,type_list,path_list)
+
+## - Calculate the instantaneous control effectiveness
+contour_cl$ctl_eff_cl <- 0
+contour_cl$ctl_eff_cm <- 0
+for (i in 2:(length(contour_cl$elbow)-1)){
+  contour_cl$ctl_eff_cl[i] <- (contour_cl$CL_adj[i+1] - contour_cl$CL_adj[i-1])/(contour_cl$dist[i+1] - contour_cl$dist[i-1])
+  contour_cl$ctl_eff_cm[i] <- (contour_cl$Cm_adj[i+1] - contour_cl$Cm_adj[i-1])/(contour_cl$dist[i+1] - contour_cl$dist[i-1])
+}
+# check for linearity
+test <- lm(cmcl~dist,data = contour_cl)
+
+contour_cmcl$ctl_eff_cl <- 0
+contour_cmcl$ctl_eff_cm <- 0
+for (i in 2:(length(contour_cmcl$elbow)-1)){
+  contour_cmcl$ctl_eff_cl[i] <- (contour_cmcl$CL_adj[i+1] - contour_cmcl$CL_adj[i-1])/(contour_cmcl$dist[i+1] - contour_cmcl$dist[i-1])
+  contour_cmcl$ctl_eff_cm[i] <- (contour_cmcl$Cm_adj[i+1] - contour_cmcl$Cm_adj[i-1])/(contour_cmcl$dist[i+1] - contour_cmcl$dist[i-1])
+}
+# check for linearity
+test <- lm(Cm_adj~dist,data = contour_cmcl)
+
 dat_link_ext$ctl_eff_cl <- 0
 dat_link_ext$ctl_eff_cm <- 0
 for (i in 2:(length(dat_link_ext$elbow)-1)){

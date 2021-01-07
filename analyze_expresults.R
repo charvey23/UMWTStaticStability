@@ -121,6 +121,17 @@ remove(dat_curr, mod.pstab, mod.pstaba, mod.lift, mod.drag, test, first_stall_al
 ## ------------------- Compare numerical and experimental data -------------------------
 ## -------------------------------------------------------------------------------------
 
+# Change the comparable values to the morphing coefficients
+# CAUTION: halve the wing area because we are looking at results from a half wing only in this section
+dat_num$L_comp <- dat_num$L_comp/(0.5*dat_num$S_max)
+dat_num$m_comp <- dat_num$m_comp/(0.5*dat_num$S_max*dat_num$c_max)
+
+dat_exp$L_comp     <- dat_exp$L_comp/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")]))
+dat_exp$L_comp_std <- dat_exp$L_comp_std/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")]))
+dat_exp$m_comp     <- dat_exp$m_comp/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")])*max(dat_num$ref_c[which(dat_num$WingID == "17_0285")]))
+dat_exp$m_comp_std <- dat_exp$m_comp_std/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")])*max(dat_num$ref_c[which(dat_num$WingID == "17_0285")]))
+
+# investigate comparable
 dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,36,37,38)]
 dat_num_simp$method <- "n"
 dat_exp_simp        <- subset(dat_exp, U < 14 & alpha <= 10 & alpha >= -10)[,c(1,4,47,48,38,40,42)]
