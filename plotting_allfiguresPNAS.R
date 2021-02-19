@@ -9,6 +9,7 @@ library(gridExtra) # for using grid arrange
 library(cowplot)   # need for plot_grid()
 library(tidyr)
 library(pdftools)
+library(GGally)    # need for ggparcoords
 # -------- Main theme ------------
 th <- theme_classic() +
   theme(
@@ -237,9 +238,9 @@ plot_cl_num_exp <- ggplot() +
         strip.text.x = element_blank())+
   # axis control
   scale_x_continuous(name = lab_aoa) +
-  scale_y_continuous(limits = c(-0.036,0.097), name = lab_cl_comp, breaks = c(-0.03,0,0.03,0.06,0.09), labels = c(-3,0,3,6,9)) +
+  scale_y_continuous(limits = c(-0.45,1.2), name = lab_cl, breaks = c(-0.4,0,0.4,0.8,1.2)) +
   annotate(geom = "segment", x = -10,    xend = 10,     y = log(0), yend = log(0)) + 
-  annotate(geom = "segment", x = log(0), xend = log(0), y = -0.03, yend = 0.09)
+  annotate(geom = "segment", x = log(0), xend = log(0), y = -0.4, yend = 1.2)
 ## --------------------------- Panel E ------------------------------
 plot_cmcl_num_exp <- ggplot() +
   # data addition 
@@ -255,10 +256,10 @@ plot_cmcl_num_exp <- ggplot() +
   theme(strip.background = element_blank(),
           strip.text.x = element_blank())+
   # axis control
-  scale_x_continuous(limits = c(-0.036,0.097), name = lab_cl_comp, breaks = c(-0.03,0,0.03,0.06,0.09), labels = c(-3,0,3,6,9)) +
-  scale_y_continuous(limits = c(-0.008,0.004), name = lab_cm_comp, breaks = c(-0.008,-0.004,0,0.004), labels = c(-8,-4,0,4)) +
-  annotate(geom = "segment", x = -0.03,    xend = 0.09,     y = log(0), yend = log(0)) + 
-  annotate(geom = "segment", x = log(0), xend = log(0), y = -0.008, yend = 0.004)
+  scale_x_continuous(limits = c(-0.45,1.2), name = lab_cl, breaks = c(-0.4,0,0.4,0.8,1.2)) +
+  scale_y_continuous(limits = c(-0.4,0.2), name = lab_cm, breaks = c(-0.4,-0.2,0,0.2)) +
+  annotate(geom = "segment", x = -0.4,    xend = 1.2,     y = log(0), yend = log(0)) + 
+  annotate(geom = "segment", x = log(0), xend = log(0), y = -0.4, yend = 0.2)
 
 
 ## --------------------------- Panel E ------------------------------
@@ -428,10 +429,9 @@ plot_con_cm0 <- plot_con_cm0 + theme(legend.position = 'none')
 
 test <- subset(dat_num, alpha == 0)
 test <- merge(test,dat_all_plot, by =c("FrameID","WingID","TestID","elbow","manus"))
-test$finalload <- test$CL_adj/max(test$CL_adj) + test$Cm_adj/min(test$Cm_adj)
 
 ## Exported as 3x8
-ggparcoord(test, columns = c(91,35,32,34,18,16,17), groupColumn = "CL_adj", alphaLines = 0.2, scale = "center", centerObsID = 148) + th +
+ggparcoord(test, columns = c(89,11,32,34,18,16,17), groupColumn = "CL_adj", alphaLines = 0.2, scale = "center", centerObsID = 148) + th +
   scale_colour_gradientn(colors = rev(cc_L), name = lab_cl) + 
   scale_y_continuous(limits = c(-0.72,0.6), breaks = c(-0.6,-0.3,0,0.3,0.6), name = "Normalized value") +
   annotate(geom = "segment", x = log(0), xend = log(0), y = -0.6, yend = 0.6) +

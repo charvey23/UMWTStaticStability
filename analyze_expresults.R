@@ -92,7 +92,7 @@ for (i in 1:nrow(dat_wing)){
       }
 
     #fit linear model to Cm vs. CL
-    mod.pstab  <- lm(Cm~L_comp, data = dat_curr_lin)
+    mod.pstab  <- lm(m_comp~L_comp, data = dat_curr_lin)
     test       <- summary(mod.pstab)
     mod.pstaba <- lm(m_comp~alpha, data = dat_curr_lin)
     mod.lift   <- lm(L_comp~alpha, data = dat_curr_lin)
@@ -121,9 +121,10 @@ remove(dat_curr, mod.pstab, mod.pstaba, mod.lift, mod.drag, test, first_stall_al
 ## ------------------- Compare numerical and experimental data -------------------------
 ## -------------------------------------------------------------------------------------
 
-# Change the comparable values to the morphing coefficients
+# Change the comparable values to the true morphing coefficients 
+# L_comp and m_comp from the previous outputs were already divided by dynamic pressure
 # CAUTION: halve the wing area because we are looking at results from a half wing only in this section
-dat_num$L_comp <- dat_num$L_comp/(0.5*dat_num$S_max)
+dat_num$L_comp <- dat_num$L_comp/(0.5*dat_num$S_max) 
 dat_num$m_comp <- dat_num$m_comp/(0.5*dat_num$S_max*dat_num$c_max)
 
 dat_exp$L_comp     <- dat_exp$L_comp/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")]))
@@ -158,7 +159,7 @@ for (i in 1:length(dat_num_simp$FrameID)){
   if (nrow(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i]))==0){
     next
   }
-  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp))
+  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp))
 }
 # output the average error for each angle of attack
 aggregate(dat_num_simp[, 9], list(dat_num_simp$alpha), mean)

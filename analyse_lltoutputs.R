@@ -94,6 +94,7 @@ dat_num$S_ref  = dat_num$S/dat_num$S_max
 # ----- Data to compare to wind tunnel data -------
 wtwings = c("F4849","F4911","F6003","F2195","F4647","F4352","F3891","F1380","F4546")
 # get to a number that is comparable to the experimental data
+# The 0.5 here accounts for half the lift produces this ends up being cancelled out in the next adjustment that multiplies S by 0.5 as well
 dat_num$L_comp = (0.5*dat_num$FL)/q
 dat_num$D_comp = (0.5*dat_num$FD)/q
 dat_num$m_comp = (0.5*dat_num$Mm)/q
@@ -281,7 +282,7 @@ data.fit.stab$cm0   <-  predict(mod_cm0_num, newdata = data.fit.stab, re.form = 
 
 # discussing the distance of static margin
 max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max)
-
+max(dat_stab$cmcl)-min(dat_stab$cmcl)
 ## -------------------------------------------------------------------
 ## ----------------- Compute the pathway derivatives -----------------
 ## ------------------------------------------------------------------- 
