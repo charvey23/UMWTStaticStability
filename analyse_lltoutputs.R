@@ -51,7 +51,7 @@ dat_num1        <- dat_num1[-which(dat_num1[,2] == "17_0285"),]
 # load wings where we had a pause after
 dat_num2        <- read.csv('2020_10_16_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
 # load rest of wings
-dat_num3        <- read.csv('2020_11_20_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE) # needs to be updated
+dat_num3        <- read.csv('2020_11_20_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
 dat_num         <- rbind(dat_num1,dat_num2,dat_num3)
 names(dat_num) <- c("species","WingID","TestID","FrameID","elbow","manus","alpha","U","build_err_max","date","S","ref_c","b_MX","MAC","b","sweep","dihedral","twist",'relax',"CL","CD","Cm","FL","FD","Mm")
 dat_num$FrameID <- paste("F", dat_num$FrameID, sep = "")

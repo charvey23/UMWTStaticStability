@@ -133,9 +133,9 @@ dat_exp$m_comp     <- dat_exp$m_comp/(0.5*max(dat_num$S[which(dat_num$WingID == 
 dat_exp$m_comp_std <- dat_exp$m_comp_std/(0.5*max(dat_num$S[which(dat_num$WingID == "17_0285")])*max(dat_num$ref_c[which(dat_num$WingID == "17_0285")]))
 
 # investigate comparable
-dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c(4,7,5,6,36,37,38)]
+dat_num_simp        <- subset(dat_num, FrameID %in% wtwings & WingID == "17_0285")[,c("L_comp","alpha","FrameID","m_comp","elbow","manus")]
 dat_num_simp$method <- "n"
-dat_exp_simp        <- subset(dat_exp, U < 14 & alpha <= 10 & alpha >= -10)[,c(1,4,47,48,38,40,42)]
+dat_exp_simp        <- subset(dat_exp, U < 14 & alpha <= 10 & alpha >= -10)[,c("L_comp","alpha","FrameID","m_comp","elbow","manus")]
 dat_exp_simp$method <- "e"
 dat_comp_simp       <- rbind(dat_exp_simp,dat_num_simp)
 
@@ -159,10 +159,10 @@ for (i in 1:length(dat_num_simp$FrameID)){
   if (nrow(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i]))==0){
     next
   }
-  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp))
+  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp))
 }
-# output the average error for each angle of attack
-aggregate(dat_num_simp[, 9], list(dat_num_simp$alpha), mean)
+# output the maximum error for each angle of attack
+aggregate(dat_num_simp$error, list(dat_num_simp$alpha), max)
 # select the angle of attack that will be used in the predictions
 alpha_select <- 0
 
