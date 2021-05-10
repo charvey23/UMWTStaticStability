@@ -11,6 +11,8 @@ library(contoureR) # need for extracting the contour lines
 library(alphahull) # need for the convex hull
 library(lme4)      # need for mixed effect model
 library(MuMIn)     # need for r^2 for mixed effects model
+setwd('/Users/christinaharvey/Documents/UMWTStaticStability/')
+source("support_basefunctions.R")
 ## -------------------------------------------
 ## ---------------- Load data ----------------
 ## -------------------------------------------
@@ -42,8 +44,7 @@ dat_all$S_proj_max[which(dat_all$WingID == "16_0048")] = max(dat_all$S_proj[whic
 dat_all$S_proj_ref  = dat_all$S_proj/dat_all$S_proj_max
 dat_all$c_root = dat_all$Pt12X - dat_all$Pt11X
 dat_all$FrameID <- paste("F", dat_all$frameID, sep = "")
-#span of the wings
-max(dat_num$b_max)*2 + 0.1044
+
 # ----- All numerical results -------
 dat_num1        <- read.csv('2020_09_22_List_Converged_1e-8.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
 # remove wt wings
@@ -213,44 +214,32 @@ dat_all_plot$manus_scale  <- dat_all_plot$manus/1000
 mod_con_cL_num = lmer(CL_adj ~ elbow_scale*manus_scale*alpha_scale + I(alpha_scale^2) + I(alpha_scale^3) + 
                       I(elbow_scale^2) + 
                       I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = subset(dat_num,alpha < 5))
-r.squaredGLMM(mod_con_cL_num)
 # AIC max was model 27
 mod_con_cm_num = lmer(Cm_adj ~ elbow_scale*manus_scale*CL_adj + I(CL_adj^2) + I(CL_adj^3) + 
                       I(elbow_scale^2) + I(elbow_scale^3) + 
                       I(manus_scale^2) + (1|WingID), data = subset(dat_num,alpha < 5))
-r.squaredGLMM(mod_con_cm_num)
 mod_cmcl_num  = lmer(cmcl ~ elbow_scale*manus_scale + 
                      I(elbow_scale^2) + I(elbow_scale^3) +
                      I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = dat_stab)
-r.squaredGLMM(mod_cmcl_num)
 mod_cm0_num   = lmer(cm0 ~ elbow_scale*manus_scale + 
                      I(elbow_scale^2) + I(elbow_scale^3) +
                      I(manus_scale^2) + I(manus_scale^3)  + (1|WingID), data = dat_stab)
-r.squaredGLMM(mod_cm0_num)
 ## models for how elbow and wrist affect twist
 mod_twist    = lmer(twist ~ elbow_scale*manus_scale +
                       I(elbow_scale^2) + I(elbow_scale^3) +
                       I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = dat_wingspec)
-r.squaredGLMM(mod_twist)
 mod_sweep    = lmer(sweep ~ elbow_scale+manus_scale +
                  I(elbow_scale^2) + I(elbow_scale^3) +
                  I(manus_scale^2) + (1|WingID), data = dat_wingspec)
-r.squaredGLMM(mod_sweep)
 mod_dihedral = lmer(dihedral ~ elbow_scale*manus_scale +
                  I(elbow_scale^2) + I(elbow_scale^3) +
                  I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = dat_wingspec)
-r.squaredGLMM(mod_dihedral)
 mod_S_total  = lmer(S_ref ~ elbow_scale*manus_scale +
                     I(elbow_scale^2) + I(elbow_scale^3) + 
                     I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = dat_wingspec)
-r.squaredGLMM(mod_S_total)
 mod_S_proj  = lmer(S_proj_ref ~ elbow_scale*manus_scale +
                       I(elbow_scale^2) + I(elbow_scale^3) +
                       I(manus_scale^2) + I(manus_scale^3) + (1|WingID), data = dat_all_plot)
-r.squaredGLMM(mod_S_proj)
-
-mod_S_proj  = lmer(CL_adj ~ twist + alpha + (1|WingID), data = subset(dat_num,alpha < 5))
-
 
 # Generate data frame with every possible combination of elbow and wrist
 alpha_select <- 0
@@ -263,9 +252,9 @@ data.fit       <- tmp$dat_cut
 vertices       <- tmp$vertices
 data.fit$elbow_scale <- data.fit$elbow/1000
 data.fit$manus_scale <- data.fit$manus/1000
-data.fit.stab  <- data.fit
+data.fit.stab        <- data.fit
 
-data.fit$alpha <- alpha_select
+data.fit$alpha       <- alpha_select
 data.fit$alpha_scale <- data.fit$alpha/10
 remove(xgrid,ygrid)
 # --- Predict data based on the control models --------
@@ -275,14 +264,11 @@ data.fit$twist   <-  predict(mod_twist, newdata = data.fit, re.form = ~0)
 data.fit$sweep   <-  predict(mod_sweep, newdata = data.fit, re.form = ~0)
 data.fit$dihedral<-  predict(mod_dihedral, newdata = data.fit, re.form = ~0)
 data.fit$S_ref   <-  predict(mod_S_total, newdata = data.fit, re.form = ~0)
-data.fit$S_proj_ref   <-  predict(mod_S_proj, newdata = data.fit, re.form = ~0)
+data.fit$S_proj_ref <-  predict(mod_S_proj, newdata = data.fit, re.form = ~0)
 
 data.fit.stab$cmcl  <-  predict(mod_cmcl_num, newdata = data.fit.stab, re.form = ~0)
 data.fit.stab$cm0   <-  predict(mod_cm0_num, newdata = data.fit.stab, re.form = ~0)
 
-# discussing the distance of static margin
-max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max)
-max(dat_stab$cmcl)-min(dat_stab$cmcl)
 ## -------------------------------------------------------------------
 ## ----------------- Compute the pathway derivatives -----------------
 ## ------------------------------------------------------------------- 
@@ -326,8 +312,7 @@ for (i in 2:(length(contour_cl$elbow)-1)){
   contour_cl$ctl_eff_cl[i] <- (contour_cl$CL_adj[i+1] - contour_cl$CL_adj[i-1])/(contour_cl$dist[i+1] - contour_cl$dist[i-1])
   contour_cl$ctl_eff_cm[i] <- (contour_cl$Cm_adj[i+1] - contour_cl$Cm_adj[i-1])/(contour_cl$dist[i+1] - contour_cl$dist[i-1])
 }
-# check for linearity
-test <- lm(cmcl~dist,data = contour_cl)
+
 
 contour_cmcl$ctl_eff_cl <- 0
 contour_cmcl$ctl_eff_cm <- 0
@@ -335,8 +320,6 @@ for (i in 2:(length(contour_cmcl$elbow)-1)){
   contour_cmcl$ctl_eff_cl[i] <- (contour_cmcl$CL_adj[i+1] - contour_cmcl$CL_adj[i-1])/(contour_cmcl$dist[i+1] - contour_cmcl$dist[i-1])
   contour_cmcl$ctl_eff_cm[i] <- (contour_cmcl$Cm_adj[i+1] - contour_cmcl$Cm_adj[i-1])/(contour_cmcl$dist[i+1] - contour_cmcl$dist[i-1])
 }
-# check for linearity
-test <- lm(Cm_adj~dist,data = contour_cmcl)
 
 dat_link_ext$ctl_eff_cl <- 0
 dat_link_ext$ctl_eff_cm <- 0
@@ -345,84 +328,47 @@ for (i in 2:(length(dat_link_ext$elbow)-1)){
   dat_link_ext$ctl_eff_cm[i] <- (dat_link_ext$Cm_adj[i+1] - dat_link_ext$Cm_adj[i-1])/(dat_link_ext$dist[i+1] - dat_link_ext$dist[i-1])
 }
 
-## --------------------------------------------------------------------------------
-## ----------------------------------- Functions ----------------------------------
-## --------------------------------------------------------------------------------
+## ------------------------------------------------------
+## ---- Extract numbers referenced within the paper -----
+## ------------------------------------------------------
 
+#maximum summed error of wing shapes
+max(dat_num$build_err_max)
 
-## ---------------- Remove points in the predicted that are outside of the convex hull ---------------- 
-cut_trueshape <- function(dat,dat_geom,col_elbow,col_manus){
-  # fit the convex hull with an alpha factor
-  alphashape <- ahull(dat_geom, alpha = 30)
-  # save all the given vertices
-  vertices <- as.data.frame(dat_geom[alphashape$ashape.obj$alpha.extremes,])
-  # Need to order the points appropriately
-  # calculate the mean value
-  centerpt <- c(mean(vertices[,1]),mean(vertices[,2]))
-  # calculate the angle from the mean of each point
-  vertices$angle <- atan2(vertices[,2]-centerpt[2],vertices[,1]-centerpt[1])
-  # sort by the angle
-  vertices <- vertices[order(vertices$angle),]
-  
-  # cut to be within the polygon
-  filtele   <- pip2d(as.matrix(vertices[,c(1:2)]),as.matrix(dat[,c(col_elbow,col_manus)])) 
-  dat_cut   <- dat[filtele==1,]  # filtele==1 retains only the points that are inside the hull
-  dat_return <- list()
-  dat_return$dat_cut  <- dat_cut
-  dat_return$vertices <- vertices
-  return(dat_return)
-}
+## conditional R^2 
+r.squaredGLMM(mod_con_cL_num)
+r.squaredGLMM(mod_con_cm_num)
+r.squaredGLMM(mod_cmcl_num)
+r.squaredGLMM(mod_cm0_num)
 
-# --------- Compute the contour line that the extension path will follow --------- 
-contour_specific <- function(z_variable,fit_data,path,path_name,rev,cut){
-  tmp        <- contourLinesR(x = fit_data$elbow, y = fit_data$manus, z = z_variable)
-  contour <- as.data.frame(matrix(nrow = length(tmp[[path]]$x), ncol = 0))
-  
-  if (rev) {
-    contour$elbow <- rev(tmp[[path]]$x)
-    contour$manus <- rev(tmp[[path]]$y)
-  }
-  else{
-    contour$elbow <- tmp[[path]]$x
-    contour$manus <- tmp[[path]]$y
-  }
-  contour <- predict_path(contour,path_name,cut)
-  return(contour)
-}
+# shift in static margin
+max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max) # absolute - each piece individually returns the x_np max and min (assumes that x_cg = 0)
+max(dat_stab$cmcl)-min(dat_stab$cmcl) # relative
+0.039/((max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max))/(max(dat_stab$cmcl)-min(dat_stab$cmcl)))
 
-# ---------- Predict all the variables along each extension path -----------
-predict_path <- function(contour,path_name, cut){
-  contour$elbow_scale <- contour$elbow/1000
-  contour$manus_scale <- contour$manus/1000
-  contour$alpha_scale <- alpha_select
-  if (cut){
-    tmp           <- cut_trueshape(contour,unique(subset(dat_all, elbow > 85 & manus > 100)[4:5]),1,2) # cut elbow and wrist to the true shape of the data
-    contour       <- tmp$dat_cut
-  }
-  # predict the associated metrics at each point
-  contour$CL_adj <- predict(mod_con_cL_num, newdata = contour, re.form = ~0)
-  contour$Cm_adj <- predict(mod_con_cm_num, newdata = contour, re.form = ~0)
-  
-  contour$cmcl <- predict(mod_cmcl_num, newdata = contour, re.form = ~0)
-  contour$cm0  <- predict(mod_cm0_num, newdata = contour, re.form = ~0)
-  
-  contour$path <- path_name
-  
-  # compute the distance of the path
-  contour$dist <- 0
-  for (i in 1:(length(contour$elbow)-1)){
-    contour$dist[i+1] <- contour$dist[i] + sqrt((contour$elbow[i+1]-contour$elbow[i])^2+(contour$manus[i+1]-contour$manus[i])^2)
-  }
+# discuss the absolute range in lift and pitch
+max(subset(dat_num, alpha == 0)$CL_adj)-min(subset(dat_num, alpha == 0)$CL_adj)
+max(subset(dat_num, alpha == 0)$Cm_adj)-min(subset(dat_num, alpha == 0)$Cm_adj)
 
-  # Scale the results to the size of the data
-  contour$CL_scale   <- (contour$CL_adj - min(subset(dat_num, alpha == alpha_select)$CL_adj))/abs(max(subset(dat_num, alpha == alpha_select)$CL_adj)-min(subset(dat_num, alpha == alpha_select)$CL_adj))
-  # want +ve to be 0 -- i.e. less moment
-  contour$Cm_scale   <- -(contour$Cm_adj - max(subset(dat_num, alpha == alpha_select)$Cm_adj))/abs(max(subset(dat_num, alpha == alpha_select)$CL_adj)-min(subset(dat_num, alpha == alpha_select)$Cm_adj))
-  contour$cmcl_scale <- -(contour$cmcl - max(dat_stab$cmcl))/abs(max(dat_stab$cmcl)-min(dat_stab$cmcl))
-  # want +ve to be 0 -- i.e. more stable
-  contour$cm0_scale  <- (contour$cm0 - min(dat_stab$cm0))/abs(max(dat_stab$cm0)-min(dat_stab$cm0))
-  return(contour)
-}
+# trajectories
+#check linearity for constant lift
+test <- lm(cmcl~dist,data = contour_cl)
+summary(test) # to pull out R^2
+# check that it is over halfway
+min(which(contour_cl$ctl_eff_cm > 0.0005))/length(contour_cl$ctl_eff_cm)
+#check linearity for constant static margin
+test <- lm(CL_adj~dist,data = contour_cmcl)
+summary(test) # to pull out R^2
+test <- lm(Cm_adj~dist,data = contour_cmcl)
+summary(test) # to pull out R^2
 
+# Trajectory 4
+#start
+max(dat_link_ext$ctl_eff_cl)
+dat_link_ext$ctl_eff_cm[which.max(dat_link_ext$ctl_eff_cl)]
+#near end
+max(dat_link_ext$ctl_eff_cm)
+dat_link_ext$ctl_eff_cl[which.max(dat_link_ext$ctl_eff_cm)]                        
 
-
+#max span
+max(dat_num$b_max)*2 + 0.1044 #add in body width

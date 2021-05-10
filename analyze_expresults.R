@@ -154,26 +154,39 @@ mod_comp_d    = lm(D_comp ~ elbow*manus + alpha + elbow:method + manus:method + 
 mod_comp_cmcl = lm(cmcl ~ elbow*manus*method, data = dat_stab_comp_simp)
 mod_comp_cm0  = lm(cm0 ~ elbow*manus*method, data = dat_stab_comp_simp)
 
-dat_num_simp$error <- NA
+dat_num_simp$L_error <- NA
+dat_num_simp$m_error <- NA
 for (i in 1:length(dat_num_simp$FrameID)){
   if (nrow(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i]))==0){
     next
   }
-  dat_num_simp$error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp - min(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp))
+  dat_num_simp$L_error[i] <- min(abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp - mean(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$L_comp)))
+  dat_num_simp$m_error[i] <- abs(subset(dat_num_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp - mean(subset(dat_exp_simp, FrameID == dat_num_simp$FrameID[i] & alpha == dat_num_simp$alpha[i])$m_comp))
 }
+
+## ------------------------------------------------------
+## ---- Extract numbers referenced within the paper -----
+## ------------------------------------------------------
+
+## Experimental Re number
+min(dat_exp$Re_c[which(dat_exp$U < 14)])*(0.2201308*0.8)
+max(dat_exp$Re_c[which(dat_exp$U < 14)])*(0.2201308*0.8)
+## Numerical Re number
+(1.225*10/(1.81*10^-5))*0.2201308
+
 # output the maximum error for each angle of attack
-aggregate(dat_num_simp$error, list(dat_num_simp$alpha), max)
+aggregate(dat_num_simp$L_error, list(dat_num_simp$alpha), mean)
+aggregate(dat_num_simp$m_error, list(dat_num_simp$alpha), mean)
+
 # select the angle of attack that will be used in the predictions
 alpha_select <- 0
 
-## Experimental Re number
-min(dat_exp$Re_c[which(dat_exp$U < 14)])*0.2201308*0.8
-max(dat_exp$Re_c[which(dat_exp$U < 14)])*0.2201308*0.8
-(1.225*10/(1.81*10^-5))*0.2201308
-
 ## To check that the ranges remain constant 
+max(subset(dat_num, alpha == 0)$L_comp)-min(subset(dat_num, alpha == 0)$L_comp)
+max(subset(dat_num, alpha == 0)$m_comp)-min(subset(dat_num, alpha == 0)$m_comp)
 
-max(subset(dat_exp, alpha == 2)$L_comp)-min(subset(dat_exp, alpha == 2)$L_comp)
+aggregate(dat_exp$L_comp, list(dat_exp$alpha), function(x){max(x)-min(x)})
+aggregate(dat_exp$m_comp, list(dat_exp$alpha), function(x){max(x)-min(x)})
 
 ###------------------------------------------------------------------------------------------------------------------------------
 ###------------------------------------------------------------------------------------------------------------------------------

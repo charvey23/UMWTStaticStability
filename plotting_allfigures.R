@@ -431,7 +431,7 @@ test <- subset(dat_num, alpha == 0)
 test <- merge(test,dat_all_plot, by =c("FrameID","WingID","TestID","elbow","manus"))
 
 ## Exported as 3x8
-ggparcoord(test, columns = c(89,11,32,34,18,16,17), groupColumn = "CL_adj", alphaLines = 0.2, scale = "center", centerObsID = 148) + th +
+ggparcoord(test, columns = c(91,43,32,34,18,16,17), groupColumn = "CL_adj", alphaLines = 0.2, scale = "center", centerObsID = 148) + th +
   scale_colour_gradientn(colors = rev(cc_L), name = lab_cl) + 
   scale_y_continuous(limits = c(-0.72,0.6), breaks = c(-0.6,-0.3,0,0.3,0.6), name = "Normalized value") +
   annotate(geom = "segment", x = log(0), xend = log(0), y = -0.6, yend = 0.6) +
