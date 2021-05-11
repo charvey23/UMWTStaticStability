@@ -362,6 +362,11 @@ summary(test) # to pull out R^2
 test <- lm(Cm_adj~dist,data = contour_cmcl)
 summary(test) # to pull out R^2
 
+# Check that the fit is non-linear for constant pitching moment
+plot(contour_cm$dist,contour_cm$CL_adj)
+plot(contour_cm$dist,contour_cm$cmcl)
+plot(contour_cm$CL_adj,contour_cm$cmcl)
+
 # Trajectory 4
 #start
 max(dat_link_ext$ctl_eff_cl)
