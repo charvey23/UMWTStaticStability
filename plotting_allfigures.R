@@ -440,35 +440,28 @@ ggparcoord(test, columns = c(91,43,32,34,18,16,17), groupColumn = "CL_adj", alph
 
 
 # ----------------------------------- Combine data panels ------------------------------------------
-toprow <- plot_grid(plot_con_cL,legend_cL,plot_con_cm, legend_cm, plot_S_total,legend_S_total,
+toprow <- plot_grid(plot_con_cL,legend_cL,plot_con_cm, legend_cm, 
                     #arrangement data
-                    ncol = 6,
-                    rel_widths = c(1,0.2,1,0.2,1,0.2),
+                    ncol = 4,
+                    rel_widths = c(1,0.2,1,0.2),
                     #labels
-                    labels = c("A","","B","","E",""),
+                    labels = c("A","","B",""),
                     label_size = 10,
                     label_fontfamily = "sans")
 
-midrow <- plot_grid(plot_con_cmcl, legend_cmcl, plot_con_cm0,legend_cm0, plot_S_proj,legend_S_proj,
+midrow <- plot_grid(plot_con_cmcl, legend_cmcl, plot_con_cm0,legend_cm0,
                        #arrangement data
-                       ncol = 6,
-                       rel_widths = c(1,0.2,1,0.2,1,0.2),
+                       ncol = 4,
+                       rel_widths = c(1,0.2,1,0.2),
                        #labels
-                       labels = c("C","","D","","F",""),
+                       labels = c("C","","D",""),
                        label_size = 10,
                        label_fontfamily = "sans")
-bottomrow <- plot_grid(plot_twist, legend_twist, plot_sweep, legend_sweep, plot_dihedral,legend_dihedral,
-                    #arrangement data
-                    ncol = 6,
-                    rel_widths = c(1,0.2,1,0.2,1,0.2),
-                    #labels
-                    labels = c("G","","H","","I",""),
-                    label_size = 10,
-                    label_fontfamily = "sans")
+
 #exported as 7.5x9
-figure3_final <- plot_grid(toprow,midrow, bottomrow,
+figure3_final <- plot_grid(toprow,midrow, 
                            #arrangement data
-                           ncol = 1, nrow = 3, rel_heights = c(1,1,1))
+                           ncol = 1, nrow = 2, rel_heights = c(1,1,1))
 
 # exported as 7.5x9 - when in the square arrangement
 # exported as 3x9 when in the line arrangement
@@ -476,7 +469,6 @@ figure3_final <- plot_grid(toprow,midrow, bottomrow,
 ## ------------------------- Figure 4 -------------------------------
 ## ------------------------------------------------------------------
 #purple scheme
-
 
 ## --------------------------- Panel A ------------------------------
 plot_rom_path <- ggplot() +

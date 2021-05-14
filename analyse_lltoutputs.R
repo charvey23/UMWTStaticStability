@@ -47,7 +47,7 @@ dat_all$FrameID <- paste("F", dat_all$frameID, sep = "")
 
 # ----- All numerical results -------
 dat_num1        <- read.csv('2020_09_22_List_Converged_1e-8.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
-# remove wt wings
+# remove wt wings - because they were re-ran at the tolerance rate of 1e-6 and those are the ones compared to WT results
 dat_num1        <- dat_num1[-which(dat_num1[,2] == "17_0285"),]
 # load wings where we had a pause after
 dat_num2        <- read.csv('2020_10_16_List_Converged_1e-6.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c(""),header = FALSE)
@@ -94,7 +94,7 @@ dat_num$S_ref  = dat_num$S/dat_num$S_max
 
 # ----- Data to compare to wind tunnel data -------
 wtwings = c("F4849","F4911","F6003","F2195","F4647","F4352","F3891","F1380","F4546")
-# get to a number that is comparable to the experimental data
+# get to a number that is comparable to the experimental data - is again adjusted within analyze_expresults.R before plotting
 # The 0.5 here accounts for half the lift produces this ends up being cancelled out in the next adjustment that multiplies S by 0.5 as well
 dat_num$L_comp = (0.5*dat_num$FL)/q
 dat_num$D_comp = (0.5*dat_num$FD)/q
@@ -121,10 +121,10 @@ for (h in 1:2){
   # loop through each wing configuration
   for (m in 1:no_testedconfigs){
     
-    # subset data to be of one wing configuration at a time
+    # subset data to be of one wing configuration at a time and subset to only fit angles under 5deg
     dat_curr <- subset(dat_num, 
                        species == dat_wingspec$species[m] & WingID == dat_wingspec$WingID[m] & 
-                         TestID == dat_wingspec$TestID[m] & FrameID == dat_wingspec$FrameID[m])
+                         TestID == dat_wingspec$TestID[m] & FrameID == dat_wingspec$FrameID[m] & alpha < 5)
     
     # save all wing specific information  
     dat_stab$species[count] <- as.character(dat_wingspec$species[m])
@@ -275,7 +275,7 @@ data.fit.stab$cm0   <-  predict(mod_cm0_num, newdata = data.fit.stab, re.form = 
 dat_link_ext  <- predict_path(dat_link_ext,"linkage", FALSE)
 contour_cl    <- contour_specific(data.fit$CL_adj,data.fit,10,"con_cl", TRUE, TRUE)
 contour_cm    <- contour_specific(data.fit$Cm_adj,data.fit,1,"con_cm", TRUE, TRUE)
-contour_cmcl  <- contour_specific(data.fit.stab$cmcl,data.fit.stab,1,"con_cmcl", FALSE, TRUE)
+contour_cmcl  <- contour_specific(data.fit.stab$cmcl,data.fit.stab,1,"con_cmcl", TRUE, TRUE)
 
 type_list <- c("CL","Cm","CmCL","Cm0")
 path_list <- c("con_cl", "con_cm", "con_cmcl","linkage")
@@ -344,7 +344,7 @@ r.squaredGLMM(mod_cm0_num)
 # shift in static margin
 max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max) # absolute - each piece individually returns the x_np max and min (assumes that x_cg = 0)
 max(dat_stab$cmcl)-min(dat_stab$cmcl) # relative
-0.039/((max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max))/(max(dat_stab$cmcl)-min(dat_stab$cmcl)))
+(max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max)-0.013)/((max(dat_stab$cmcl*dat_stab$c_max)-min(dat_stab$cmcl*dat_stab$c_max))/(max(dat_stab$cmcl)-min(dat_stab$cmcl)))
 
 # discuss the absolute range in lift and pitch
 max(subset(dat_num, alpha == 0)$CL_adj)-min(subset(dat_num, alpha == 0)$CL_adj)
@@ -377,3 +377,12 @@ dat_link_ext$ctl_eff_cl[which.max(dat_link_ext$ctl_eff_cm)]
 
 #max span
 max(dat_num$b_max)*2 + 0.1044 #add in body width
+
+# number of configs that converged for at least one alpha
+nrow(dat_wingspec)
+# ntotal converged configs
+nrow(dat_num)
+# configs that converged at 0deg alpha
+nrow(subset(dat_num, alpha == 0))
+# number of configs with at least 4 angles of attack and linear Cm, Cl relationship
+nrow(dat_stab)
