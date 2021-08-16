@@ -24,7 +24,7 @@ names(dat_link_ext)[names(dat_link_ext) == "elbowAngle"] <- "elbow"
 names(dat_link_ext)[names(dat_link_ext) == "manusAngle"] <- "manus"
 dat_link_ext  <- subset(dat_link_ext, manus > 100 & elbow > 85)
 
-setwd('/Users/christinaharvey/Google Drive/DoctoralThesis/StaticStability/AvianWingLLT')
+setwd('/Users/christinaharvey/Google Drive/DoctoralThesis/Chapter1_StaticStability/StaticStability/AvianWingLLT')
 
 # ----- All wing shapes read into the code -------------
 dat_all <- read.csv('2020_05_25_OrientedWings.csv', stringsAsFactors = FALSE,strip.white = TRUE, na.strings = c("") )
@@ -42,7 +42,7 @@ dat_all$S_proj_max[which(dat_all$WingID == "17_0285")] = max(dat_all$S_proj[whic
 dat_all$S_proj_max[which(dat_all$WingID == "17_0243")] = max(dat_all$S_proj[which(dat_all$WingID == "17_0243")])
 dat_all$S_proj_max[which(dat_all$WingID == "16_0048")] = max(dat_all$S_proj[which(dat_all$WingID == "16_0048")])
 dat_all$S_proj_ref  = dat_all$S_proj/dat_all$S_proj_max
-dat_all$c_root = dat_all$Pt12X - dat_all$Pt11X
+dat_all$c_root = sqrt((dat_all$Pt12X - dat_all$Pt11X)^2 + (dat_all$Pt12Z - dat_all$Pt11Z)^2)
 dat_all$FrameID <- paste("F", dat_all$frameID, sep = "")
 
 # ----- All numerical results -------
@@ -375,8 +375,9 @@ dat_link_ext$ctl_eff_cm[which.max(dat_link_ext$ctl_eff_cl)]
 max(dat_link_ext$ctl_eff_cm)
 dat_link_ext$ctl_eff_cl[which.max(dat_link_ext$ctl_eff_cm)]                        
 
-#max span
-max(dat_num$b_max)*2 + 0.1044 #add in body width
+#max span - body width has already been accounted for
+max(dat_num$b_max)*2 
+1.05/(max(dat_num$b_max)*2)
 
 # number of configs that converged for at least one alpha
 nrow(dat_wingspec)
