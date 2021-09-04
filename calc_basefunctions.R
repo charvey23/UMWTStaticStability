@@ -1,7 +1,11 @@
 ## ----------------- Calculate the STD from a time series ----------------
 
 timeseries_std <- function(timeseries,no_samples){
-  
+  # equations refer to paper: Zieba, A. (2010). Effective number of observations
+  # and unbiased estimators of variance for autocorrelated data-an overview.
+  # Metrol. Meas. Syst, 17(1), 3-16.
+  # URL: http://www.metrology.pg.gda.pl/full/2010/M&MS_2010_003.pdf
+
   data_std_sample = sd(timeseries)
   # choose the number of lags to be the entire sample-1 
   no_lags    <- no_samples - 1
